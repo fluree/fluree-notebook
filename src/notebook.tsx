@@ -33,6 +33,7 @@ const MonacoCell: React.FC<{
   const [result, setResult] = useState<string | null>(null);
   const [cellValue, setCellValue] = useState<string>(value);
 
+
   const handleQuery = async () => {
     setResult(value);
   };
@@ -40,13 +41,13 @@ const MonacoCell: React.FC<{
     setResult('{"block": "2"}');
   };
   const handleCreate = async () => {
+    console.log("cellValue: ", cellValue);
     fetch('http://localhost:58090/fluree/create', {
       method: 'POST',
-      mode: 'no-cors',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(cellValue),
+      body: cellValue,
     })
       .then((r) => r.json())
       .then((d) => setResult(d))
@@ -56,7 +57,7 @@ const MonacoCell: React.FC<{
     if (createCell) {
       setCellValue(JSON.stringify(createJson, null, 2));
     }
-  });
+  }, [createJson]);
   return (
     <div className="border-2 border-gray-200 rounded-xl p-4 m-4 bg-gray-50 flex flex-col">
       <MonacoEditor
@@ -65,6 +66,7 @@ const MonacoCell: React.FC<{
         theme="vs-dark"
         options={{ padding: { top: 10 } }}
         value={cellValue}
+        onChange={(value) => setCellValue(value)}
       />
       <div>
         {createCell ? (
@@ -98,7 +100,7 @@ const MonacoCell: React.FC<{
           language="javascript"
           theme="vs-dark"
           options={{ padding: { top: 10 } }}
-          value={result}
+          value={JSON.stringify(result, null, 2)}
         />
       )}
     </div>
