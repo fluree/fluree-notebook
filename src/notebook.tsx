@@ -40,7 +40,7 @@ const MonacoCell: React.FC<{
     setResult('{"block": "2"}');
   };
   const handleCreate = async () => {
-    fetch('http://ledger.local/fluree/create', {
+    fetch('http://localhost:58090/fluree/create', {
       method: 'POST',
       mode: 'no-cors',
       headers: {
