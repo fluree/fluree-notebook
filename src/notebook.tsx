@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ChangeEvent, MouseEventHandler } from 'react';
 import MonacoEditor from 'react-monaco-editor';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -40,9 +40,12 @@ const MonacoCell: React.FC<{
   const handleTransact = async () => {
     setResult('{"block": "2"}');
   };
-  const handleCreate = async () => {
+
+  
+  const flureePost = async (e:any) => {
+    const postType = e.currentTarget.value;
     console.log("cellValue: ", cellValue);
-    fetch('http://localhost:58090/fluree/create', {
+    fetch(`http://localhost:58090/fluree/${postType}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -53,6 +56,7 @@ const MonacoCell: React.FC<{
       .then((d) => setResult(d))
       .catch((e) => console.log(e));
   };
+
   useEffect(() => {
     if (createCell) {
       setCellValue(JSON.stringify(createJson, null, 2));
@@ -71,22 +75,25 @@ const MonacoCell: React.FC<{
       <div>
         {createCell ? (
           <button
+            value="create"
             className="self-start mt-4 mb-4 px-4 py-2 bg-blue-600 text-white rounded"
-            onClick={handleCreate}
+            onClick={flureePost}
           >
             Create
           </button>
         ) : (
           <div>
             <button
+              value="query"
               className="self-start mt-4 mb-4 px-4 py-2 bg-blue-600 text-white rounded"
-              onClick={handleQuery}
+              onClick={flureePost}
             >
               Query
             </button>
             <button
+              value="transact"
               className="self-start mt-4 ml-4 mb-4 px-4 py-2 bg-blue-600 text-white rounded"
-              onClick={handleTransact}
+              onClick={flureePost}
             >
               Transact
             </button>
