@@ -120,7 +120,7 @@ const MarkdownCell: React.FC<{
 }> = ({ value, onChange }) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   return isEditing ? (
-    <div className="markdown-cell editing flex flex-col">
+    <div className="markdown-cell editing flex flex-col p-8">
       <textarea
         className="h-64"
         value={value}
