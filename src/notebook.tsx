@@ -1,13 +1,14 @@
-import React, { useState, useEffect, ChangeEvent, MouseEventHandler } from 'react';
-import MonacoEditor from 'react-monaco-editor';
+import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import Editor from '@monaco-editor/react';
 
 interface CellProps {
   type: 'markdown' | 'monaco';
   value: string;
   onChange: (value: string) => void;
   createCell?: boolean;
+  language?: 'json' | 'sparql'
 }
 const createJson = {
   ledger: 'notebook1',
@@ -26,29 +27,32 @@ const createJson = {
   },
   txn: { message: 'ledger created' },
 };
+
+
 const MonacoCell: React.FC<{
   value: string;
+  language: 'json' | 'sparql'
   createCell?: boolean;
-}> = ({ value, createCell }) => {
+}> = ({ value, createCell, language }) => {
   const [result, setResult] = useState<string | null>(null);
   const [cellValue, setCellValue] = useState<string>(value);
 
-
-  const handleQuery = async () => {
-    setResult(value);
-  };
-  const handleTransact = async () => {
-    setResult('{"block": "2"}');
-  };
-
-  
   const flureePost = async (e:any) => {
-    const postType = e.currentTarget.value;
+    let contentType:string;
+    const [endPoint, language] = e.currentTarget.value.split(",");
+
+    if(language === 'sparql') {
+      contentType = 'application/sparql-query'
+    }
+    else {
+      contentType = 'application/json'
+    };
+
     console.log("cellValue: ", cellValue);
-    fetch(`http://localhost:58090/fluree/${postType}`, {
+    fetch(`http://localhost:58090/fluree/${endPoint}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': contentType,
       },
       body: cellValue,
     })
@@ -62,15 +66,22 @@ const MonacoCell: React.FC<{
       setCellValue(JSON.stringify(createJson, null, 2));
     }
   }, [createJson]);
+
+  const handleChange = ((value:string | undefined, _event:any) => {
+    if(typeof value === 'string') {
+      setCellValue(value);
+    }
+  });
+
   return (
     <div className="border-2 border-gray-200 rounded-xl p-4 m-4 bg-gray-50 flex flex-col">
-      <MonacoEditor
+      <Editor
         height="200px"
-        language="javascript"
+        language={language}
         theme="vs-dark"
         options={{ padding: { top: 10 } }}
         value={cellValue}
-        onChange={(value) => setCellValue(value)}
+        onChange={handleChange}
       />
       <div>
         {createCell ? (
@@ -84,7 +95,7 @@ const MonacoCell: React.FC<{
         ) : (
           <div>
             <button
-              value="query"
+              value={["query", language]}
               className="self-start mt-4 mb-4 px-4 py-2 bg-blue-600 text-white rounded"
               onClick={flureePost}
             >
@@ -102,9 +113,9 @@ const MonacoCell: React.FC<{
       </div>
 
       {result && (
-        <MonacoEditor
+        <Editor
           height="200px"
-          language="javascript"
+          language="json"
           theme="vs-dark"
           options={{ padding: { top: 10 } }}
           value={JSON.stringify(result, null, 2)}
@@ -142,7 +153,7 @@ const MarkdownCell: React.FC<{
   );
 };
 
-const Cell: React.FC<CellProps> = ({ type, value, onChange, createCell }) => {
+const Cell: React.FC<CellProps> = ({ type, value, onChange, createCell, language="json" }) => {
   if (type === 'markdown') {
     return (
       <div className="border-2 border-gray-200 rounded-xl p-4 m-4 bg-gray-50">
@@ -150,14 +161,14 @@ const Cell: React.FC<CellProps> = ({ type, value, onChange, createCell }) => {
       </div>
     );
   } else if (type === 'monaco') {
-    return <MonacoCell value={value} createCell={createCell} />;
+    return <MonacoCell value={value} createCell={createCell} language={language}/>;
   }
   return null;
 };
 
 const Notebook: React.FC = () => {
   const [cells, setCells] = useState<
-    { type: 'markdown' | 'monaco'; value: string; createCell?: boolean }[]
+    { type: 'markdown' | 'monaco'; value: string; createCell?: boolean, language?: 'json' | 'sparql' }[]
   >([
     {
       type: 'markdown',
@@ -167,12 +178,12 @@ const Notebook: React.FC = () => {
     { type: 'monaco', value: '{ "name": "John Doe" }', createCell: true },
   ]);
 
-  const addCell = (type: 'markdown' | 'monaco') => {
+  const addCell = (type: 'markdown' | 'monaco', language: 'sparql' | 'json'="json") => {
     const newVal =
       type === 'markdown'
         ? '## New Markdown Cell\n Click inside to edit'
         : '{ "new": "JSON value" }';
-    setCells([...cells, { type, value: newVal }]);
+    setCells([...cells, { type, value: newVal, language: language }]);
   };
 
   return (
@@ -199,6 +210,12 @@ const Notebook: React.FC = () => {
         onClick={() => addCell('monaco')}
       >
         Add FlureeQL Cell
+      </button>
+      <button
+        className="m-4 px-4 py-2 bg-blue-600 text-white rounded"
+        onClick={() => addCell('monaco', 'sparql')}
+      >
+        Add SQARQL Cell
       </button>
     </div>
   );
