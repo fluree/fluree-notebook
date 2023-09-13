@@ -39,14 +39,24 @@ const Notebook: React.FC = () => {
       value:
         '## Fluree Notebook\n- Run `http-api-gateway` on port 58090\n - `docker run -p 58090:8090 fluree/http-api-gateway`\n - "Transact" the first cell to create the Ledger',
     },
-    { type: 'monaco', value: '{ "name": "John Doe" }', createCell: true },
+    { type: 'monaco', value: '{ "from": "notebook1" }', createCell: true },
   ]);
 
   const addCell = (type: 'markdown' | 'monaco', language: 'sparql' | 'json'="json") => {
-    const newVal =
-      type === 'markdown'
-        ? '## New Markdown Cell\n Click inside to edit'
-        : '{ "new": "JSON value" }';
+    let newVal:string = ""
+
+    if(type === 'markdown') {
+      newVal = '## New Markdown Cell\n Click inside to edit'
+    }
+
+    if(type === 'monaco' && language === 'sparql') {
+      newVal = "SELECT ?s \nFROM <notebook1>\nWHERE {\n?s <type> rdfs:Class\n}";
+    }
+
+    if(type === 'monaco' && language === 'json') {
+      newVal = JSON.stringify({from: 'notebook1', select: '?s', where: [['?s', 'rdf:type', 'rdfs:Class']]}, null, 2);
+    }
+
     setCells([...cells, { type, value: newVal, language: language }]);
   };
 
