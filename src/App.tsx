@@ -1,7 +1,7 @@
-import Notebook from './notebook';
+import NotebookShell from './notebook-shell';
 
 function App() {
-  return <Notebook />;
+  return <NotebookShell />;
 }
 
 export default App;

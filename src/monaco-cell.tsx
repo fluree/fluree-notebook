@@ -67,7 +67,7 @@ const MonacoCell: React.FC<{
   return (
     <div className="border-2 border-gray-200 rounded-xl p-4 m-4 bg-gray-50 flex flex-col">
       <Editor
-        height="200px"
+        height="300px"
         language={language}
         theme="vs-dark"
         options={{ padding: { top: 10 } }}
@@ -105,7 +105,7 @@ const MonacoCell: React.FC<{
 
       {result && (
         <Editor
-          height="200px"
+          height="300px"
           language="json"
           theme="vs-dark"
           options={{ padding: { top: 10 } }}

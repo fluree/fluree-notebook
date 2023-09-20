@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import MarkdownCell from './markdown-cell';
 import MonacoCell from './monaco-cell';
+import type { NotebookProps } from "./types/index.d.ts"
 
 interface CellProps {
   type: 'markdown' | 'monaco';
@@ -30,17 +31,10 @@ const Cell: React.FC<CellProps> = ({ type, value, onChange, createCell, language
     );
 };
 
-const Notebook: React.FC = () => {
+const Notebook: React.FC<NotebookProps> = ({id, storedCells, onCellsChange}) => {
   const [cells, setCells] = useState<
     { type: 'markdown' | 'monaco'; value: string; createCell?: boolean, language?: 'json' | 'sparql' }[]
-  >([
-    {
-      type: 'markdown',
-      value:
-        '## Fluree Notebook\n- Run `http-api-gateway` on port 58090\n - `docker run -p 58090:8090 fluree/http-api-gateway`\n - "Transact" the first cell to create the Ledger',
-    },
-    { type: 'monaco', value: '{ "from": "notebook1" }', createCell: true },
-  ]);
+  >(storedCells);
 
   const addCell = (type: 'markdown' | 'monaco', language: 'sparql' | 'json'="json") => {
     let newVal:string = ""
@@ -57,7 +51,10 @@ const Notebook: React.FC = () => {
       newVal = JSON.stringify({from: 'notebook1', select: '?s', where: [['?s', 'rdf:type', 'rdfs:Class']]}, null, 2);
     }
 
-    setCells([...cells, { type, value: newVal, language: language }]);
+    const newCells = [...cells, { type, value: newVal, language: language }];
+    setCells(newCells);
+    onCellsChange(newCells);
+
   };
 
   const deleteCell = (idx: number) => {
@@ -66,6 +63,7 @@ const Notebook: React.FC = () => {
 
   return (
     <div>
+      <h1>Editing {id}</h1>
       {cells.map((cell, idx) => (
         <Cell
           key={idx}
@@ -74,6 +72,7 @@ const Notebook: React.FC = () => {
             const newCells = [...cells];
             newCells[idx].value = newValue;
             setCells(newCells);
+            onCellsChange(newCells);
           }}
           onDelete={() => deleteCell(idx)}
         />
