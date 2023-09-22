@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
-import Notebook from "./notebook";
-import type { NotebookState, Cell } from "./types/index.d.ts";
+import { useState } from "react";
+import { Sidebar } from "./components/sidebar.tsx";
+import Notebook from "./notebook.tsx";
+import type { NotebookState, Cell } from "./types/index";
 
-const NotebookShell: React.FC = () => {
-
+export const About = (): JSX.Element => {
   const [state, setState] = useState<NotebookState>(() => {
-    const localState = localStorage.getItem('notebookState');
+    const localState = localStorage.getItem("notebookState");
     if (localState) {
       return JSON.parse(localState);
     }
@@ -13,36 +13,46 @@ const NotebookShell: React.FC = () => {
   });
 
   const [cells, setCells] = useState<
-    { type: 'markdown' | 'monaco'; value: string; createCell?: boolean, language?: 'json' | 'sparql' }[]
+    {
+      type: "markdown" | "monaco";
+      value: string;
+      createCell?: boolean;
+      language?: "json" | "sparql";
+    }[]
   >([]);
-
-
-  useEffect(() => {
-    localStorage.setItem('notebookState', JSON.stringify(state));
-  }, [state]);
-
 
   const addNewNotebook = () => {
     const id = Math.random().toString(36).substring(7); // generate a unique id
-    setState(prevState => ({
+    setState((prevState) => ({
       ...prevState,
-      notebooks: [...prevState.notebooks, { id, cells: [] }],
-      activeNotebookId: id
+      notebooks: [
+        ...prevState.notebooks,
+        {
+          id,
+          cells: [
+            { value: "", language: "json", type: "monaco", createCell: true },
+          ],
+        },
+      ],
+      activeNotebookId: id,
     }));
   };
 
   const selectNotebook = (id: string) => {
-    setState(prevState => ({ ...prevState, activeNotebookId: id }));
-    setCells(state.notebooks.find(n => n.id === id)?.cells || []);
+    setState((prevState) => ({ ...prevState, activeNotebookId: id }));
+    const cells = state.notebooks.find((n) => n.id === id)?.cells || [];
+    console.log("CELLS: ", cells);
+    setCells(cells);
   };
 
   const editNotebook = (id: string, cells: Cell[]) => {
-    console.log("editNotebook")
-    setState(prevState => {
-      const notebooks = prevState.notebooks.map(notebook =>
-        notebook.id === id
-          ? { ...notebook, cells }
-          : notebook
+    console.log("editNotebook cells ", cells);
+    console.log("editNotebook id ", id);
+
+    setCells(cells);
+    setState((prevState) => {
+      const notebooks = prevState.notebooks.map((notebook) =>
+        notebook.id === id ? { ...notebook, cells } : notebook
       );
       return { ...prevState, notebooks };
     });
@@ -50,27 +60,25 @@ const NotebookShell: React.FC = () => {
 
   return (
     <div className="flex">
-      <div className="w-1/4 bg-gray-200 p-4">
-        {state.notebooks.map(notebook => (
-          <button key={notebook.id} onClick={() => selectNotebook(notebook.id)} className={`block w-full text-left p-2 ${notebook.id === state.activeNotebookId ? 'bg-gray-300' : ''}`}>
-            Notebook {notebook.id}
-          </button>
-        ))}
-        <button onClick={addNewNotebook} className="block w-full text-left p-2 bg-blue-500 text-white">
-          New Notebook
-        </button>
+      <div className="w-1/5 bg-white p-4 rounded-lg">
+        <Sidebar
+          notebooks={state.notebooks}
+          selectedNotebook={state.activeNotebookId || ""}
+          onSelectNotebook={selectNotebook}
+          addNotebook={addNewNotebook}
+        />
       </div>
-      <div className="w-3/4 p-4">
+      <div className="w-4/5 bg-white p-4 rounded-lg">
         {state.activeNotebookId && (
           <Notebook
             id={state.activeNotebookId}
             storedCells={cells}
-            onCellsChange={(cells: Cell[]) => editNotebook(state.activeNotebookId as string, cells)}
+            onCellsChange={(cells: Cell[]) =>
+              editNotebook(state.activeNotebookId as string, cells)
+            }
           />
         )}
       </div>
     </div>
-  )
-}
-
-export default NotebookShell;
+  );
+};

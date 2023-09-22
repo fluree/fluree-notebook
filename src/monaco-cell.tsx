@@ -1,49 +1,50 @@
-import React, { useState, useEffect } from 'react';
-import Editor from '@monaco-editor/react';
-
+import React, { useState, useEffect } from "react";
+import Editor from "@monaco-editor/react";
 
 const createJson = {
-  ledger: 'notebook1',
+  ledger: "notebook1",
   defaultContext: {
-    id: '@id',
-    type: '@type',
-    xsd: 'http://www.w3.org/2001/XMLSchema#',
-    rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-    rdfs: 'http://www.w3.org/2000/01/rdf-schema#',
-    sh: 'http://www.w3.org/ns/shacl#',
-    schema: 'http://schema.org/',
-    skos: 'http://www.w3.org/2008/05/skos#',
-    wiki: 'https://www.wikidata.org/wiki/',
-    f: 'https://ns.flur.ee/ledger#',
-    ex: 'http://example.org/',
+    id: "@id",
+    type: "@type",
+    xsd: "http://www.w3.org/2001/XMLSchema#",
+    rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    rdfs: "http://www.w3.org/2000/01/rdf-schema#",
+    sh: "http://www.w3.org/ns/shacl#",
+    schema: "http://schema.org/",
+    skos: "http://www.w3.org/2008/05/skos#",
+    wiki: "https://www.wikidata.org/wiki/",
+    f: "https://ns.flur.ee/ledger#",
+    ex: "http://example.org/",
   },
-  txn: { message: 'ledger created' },
+  txn: { message: "ledger created" },
 };
 
 const MonacoCell: React.FC<{
   value: string;
-  language: 'json' | 'sparql'
+  language: "json" | "sparql";
   createCell?: boolean;
 }> = ({ value, createCell, language }) => {
+  if (createCell) {
+    value = JSON.stringify(createJson, null, 2);
+  }
   const [result, setResult] = useState<string | null>(null);
   const [cellValue, setCellValue] = useState<string>(value);
 
-  const flureePost = async (e:any) => {
-    let contentType:string;
+  const flureePost = async (e: any) => {
+    let contentType: string;
     const [endPoint, language] = e.currentTarget.value.split(",");
 
-    if(language === 'sparql') {
-      contentType = 'application/sparql-query'
+    if (language === "sparql") {
+      contentType = "application/sparql-query";
+    } else {
+      contentType = "application/json";
     }
-    else {
-      contentType = 'application/json'
-    };
 
     console.log("cellValue: ", cellValue);
     fetch(`http://localhost:58090/fluree/${endPoint}`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': contentType,
+        "Content-Type": contentType,
       },
       body: cellValue,
     })
@@ -52,17 +53,11 @@ const MonacoCell: React.FC<{
       .catch((e) => console.log(e));
   };
 
-  useEffect(() => {
-    if (createCell) {
-      setCellValue(JSON.stringify(createJson, null, 2));
-    }
-  }, [createJson]);
-
-  const handleChange = ((value:string | undefined, _event:any) => {
-    if(typeof value === 'string') {
+  const handleChange = (value: string | undefined, _event: any) => {
+    if (typeof value === "string") {
       setCellValue(value);
     }
-  });
+  };
 
   return (
     <div className="border-2 border-gray-200 rounded-xl p-4 m-4 bg-gray-50 flex flex-col">
