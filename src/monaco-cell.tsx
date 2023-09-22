@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Editor from "@monaco-editor/react";
 
 const createJson = {
@@ -30,9 +30,9 @@ const MonacoCell: React.FC<{
   const [result, setResult] = useState<string | null>(null);
   const [cellValue, setCellValue] = useState<string>(value);
 
-  const flureePost = async (e: any) => {
+  const flureePost = async (element: any) => {
     let contentType: string;
-    const [endPoint, language] = e.currentTarget.value.split(",");
+    const [endPoint, language] = element.currentTarget.value.split(",");
 
     if (language === "sparql") {
       contentType = "application/sparql-query";

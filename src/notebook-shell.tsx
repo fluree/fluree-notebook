@@ -3,7 +3,7 @@ import { Sidebar } from "./components/sidebar.tsx";
 import Notebook from "./notebook.tsx";
 import type { NotebookState, Cell } from "./types/index";
 
-export const About = (): JSX.Element => {
+export const NotebookShell = (): JSX.Element => {
   const [state, setState] = useState<NotebookState>(() => {
     const localState = localStorage.getItem("notebookState");
     if (localState) {
