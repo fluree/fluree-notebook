@@ -26,11 +26,13 @@ export const QueryCell = ({
   value,
   createCell,
   language,
+  addCell,
 }: {
   value: string;
   createCell: boolean;
   language: "sparql" | "json";
   onClick?: (element: React.MouseEvent<HTMLElement>) => void;
+  addCell: (value: "Markdown" | "SPARQL" | "FLUREEQL") => void;
 }): JSX.Element => {
   if (createCell) {
     value = JSON.stringify(createJson, null, 2);
@@ -38,7 +40,7 @@ export const QueryCell = ({
   const [result, setResult] = useState<string | null>(null);
   const [cellValue, setCellValue] = useState<string>(value);
 
-  const flureePost = async (element: React.MouseEvent<HTMLElement>) => {
+  const flureePost = async () => {
     let contentType: string;
     let endPoint: string = "query";
 
@@ -63,9 +65,6 @@ export const QueryCell = ({
       }
     }
 
-    console.log("cellValue: ", cellValue);
-    console.log("End Point: ", endPoint);
-    console.log("Language: ", language);
     fetch(`http://localhost:58090/fluree/${endPoint}`, {
       method: "POST",
       headers: {
@@ -229,10 +228,6 @@ export const QueryCell = ({
           </div>
         </div>
       )}
-
-      <div className="py-2">
-        <AddCell />
-      </div>
     </div>
   );
 };

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import MarkdownCell from "./markdown-cell";
 import type { NotebookProps } from "./types/index.d.ts";
 import { QueryCell } from "./components/query-cell.tsx";
+import { AddCell } from "./components/buttons/add-cell.tsx";
 
 interface CellProps {
   type: "markdown" | "monaco";
@@ -10,6 +11,7 @@ interface CellProps {
   onDelete: () => void;
   createCell?: boolean;
   language?: "json" | "sparql";
+  addCell: (value: "Markdown" | "SPARQL" | "FLUREEQL") => void;
 }
 
 const Cell: React.FC<CellProps> = ({
@@ -19,14 +21,20 @@ const Cell: React.FC<CellProps> = ({
   createCell,
   language = "json",
   onDelete,
+  addCell,
 }) => {
   return (
     <div>
       {type === "markdown" && (
-        <MarkdownCell value={value} onChange={onChange} />
+        <MarkdownCell value={value} onChange={onChange} addCell={addCell} />
       )}
       {type === "monaco" && (
-        <QueryCell value={value} createCell={createCell} language={language} />
+        <QueryCell
+          value={value}
+          createCell={createCell}
+          language={language}
+          addCell={addCell}
+        />
       )}
     </div>
   );
@@ -48,21 +56,24 @@ const Notebook: React.FC<NotebookProps> = ({
 
   console.log("STORED CELLS: ", storedCells);
 
-  const addCell = (
-    type: "markdown" | "monaco",
-    language: "sparql" | "json" = "json"
-  ) => {
+  const addCell = (value: "Markdown" | "SPARQL" | "FLUREEQL") => {
     let newVal: string = "";
+    let language: "json" | "sparql" = "json";
+    let type: "monaco" | "markdown" = "monaco";
+    console.log("ADD CELL CLICKE WITH VALUE ", value);
 
-    if (type === "markdown") {
+    if (value === "Markdown") {
+      type = "markdown";
       newVal = "## New Markdown Cell\n Click inside to edit";
     }
 
-    if (type === "monaco" && language === "sparql") {
+    if (value === "SPARQL") {
+      language = "sparql";
+
       newVal = "SELECT ?s \nFROM <notebook1>\nWHERE {\n?s <type> rdfs:Class\n}";
     }
 
-    if (type === "monaco" && language === "json") {
+    if (value === "FLUREEQL") {
       newVal = JSON.stringify(
         {
           from: "notebook1",
@@ -100,12 +111,13 @@ const Notebook: React.FC<NotebookProps> = ({
               onCellsChange(newCells);
             }}
             onDelete={() => deleteCell(idx)}
+            addCell={addCell}
           />
-          {/* In order to run from here, I'd need to set the results state here as well
-              I may want to get the run button in the QueryCell Component so that it can 
-              handle it's own rendering of the results */}
         </div>
       ))}
+      <div className="py-2">
+        <AddCell addCell={addCell} />
+      </div>
     </div>
   );
 };

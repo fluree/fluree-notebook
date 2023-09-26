@@ -29,6 +29,7 @@ export default {
         "fluree-nexus-strucutre-01": "#fdfdfd",
         "fluree-nexus-status-01": "#26c575",
         "ui-main-800": "#00518c",
+        "ui-main-100": "#e1f8ff",
       },
       spacing: {},
       width: {},

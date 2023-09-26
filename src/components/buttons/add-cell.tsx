@@ -51,7 +51,11 @@ export const Chevron = ({ down }: { down: boolean }): JSX.Element => {
   }
 };
 
-export const AddCell = (): JSX.Element => {
+export const AddCell = ({
+  addCell,
+}: {
+  addCell: (value: string) => void;
+}): JSX.Element => {
   const [showList, setShowList] = useState(false);
   return (
     <div className="flex flex-col">
@@ -70,8 +74,12 @@ export const AddCell = (): JSX.Element => {
             <Chevron down={!showList} />
           </div>
         </div>
-        <div>{showList && <AddCellList />}</div>
       </button>
+      <div>
+        {showList && (
+          <AddCellList addCell={addCell} setShowList={setShowList} />
+        )}
+      </div>
     </div>
   );
 };
