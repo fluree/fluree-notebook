@@ -16,7 +16,7 @@ export const Sidebar = ({
   addNotebook: () => void;
 }): JSX.Element => {
   return (
-    <div className="rounded-md w-[286px] h-[702px] absolute left-[0.5px] top-[15px] overflow-hidden">
+    <div className="rounded-md w-[286px] h-[702px] absolute left-[0.5px] top-[60px] overflow-hidden">
       <div className="absolute" style={{ inset: "0" }}>
         <div className="w-[264.92px] h-[341px] static">
           <div className="w-[264.92px] h-[341px] static">
@@ -27,6 +27,7 @@ export const Sidebar = ({
                   {notebooks.map((notebook) => (
                     <SidebarItem
                       id={notebook.id}
+                      key={notebook.id}
                       onSelectNotebook={onSelectNotebook}
                       background={
                         notebook.id === selectedNotebook ? "bg-[#e1f8ff]" : ""

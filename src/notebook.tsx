@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import MarkdownCell from "./markdown-cell";
-import MonacoCell from "./monaco-cell";
 import type { NotebookProps } from "./types/index.d.ts";
+import { QueryCell } from "./components/query-cell.tsx";
 
 interface CellProps {
   type: "markdown" | "monaco";
@@ -21,18 +21,12 @@ const Cell: React.FC<CellProps> = ({
   onDelete,
 }) => {
   return (
-    <div className="border-2 border-gray-200 rounded-xl p-4 m-4 bg-gray-50 relative">
-      <button
-        className="absolute  w-4 h-5 right-2 bg-red-500 text-white text-center rounded text-sm"
-        onClick={onDelete}
-      >
-        x
-      </button>
+    <div>
       {type === "markdown" && (
         <MarkdownCell value={value} onChange={onChange} />
       )}
       {type === "monaco" && (
-        <MonacoCell value={value} createCell={createCell} language={language} />
+        <QueryCell value={value} createCell={createCell} language={language} />
       )}
     </div>
   );
@@ -95,36 +89,23 @@ const Notebook: React.FC<NotebookProps> = ({
   return (
     <div>
       {storedCells.map((cell, idx) => (
-        <Cell
-          key={idx}
-          {...cell}
-          onChange={(newValue) => {
-            const newCells = [...cells];
-            newCells[idx].value = newValue;
-            setCells(newCells);
-            onCellsChange(newCells);
-          }}
-          onDelete={() => deleteCell(idx)}
-        />
+        <div className="cell">
+          <Cell
+            key={idx}
+            {...cell}
+            onChange={(newValue) => {
+              const newCells = [...cells];
+              newCells[idx].value = newValue;
+              setCells(newCells);
+              onCellsChange(newCells);
+            }}
+            onDelete={() => deleteCell(idx)}
+          />
+          {/* In order to run from here, I'd need to set the results state here as well
+              I may want to get the run button in the QueryCell Component so that it can 
+              handle it's own rendering of the results */}
+        </div>
       ))}
-      <button
-        className="m-4 px-4 py-2 bg-blue-600 text-white rounded"
-        onClick={() => addCell("markdown")}
-      >
-        Add Markdown Cell
-      </button>
-      <button
-        className="m-4 px-4 py-2 bg-blue-600 text-white rounded"
-        onClick={() => addCell("monaco")}
-      >
-        Add FlureeQL Cell
-      </button>
-      <button
-        className="m-4 px-4 py-2 bg-blue-600 text-white rounded"
-        onClick={() => addCell("monaco", "sparql")}
-      >
-        Add SQARQL Cell
-      </button>
     </div>
   );
 };

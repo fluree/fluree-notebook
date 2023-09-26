@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Sidebar } from "./components/sidebar.tsx";
 import Notebook from "./notebook.tsx";
 import type { NotebookState, Cell } from "./types/index";
+import { MainNav } from "./components/main-nav.tsx";
 
 export const NotebookShell = (): JSX.Element => {
   const [state, setState] = useState<NotebookState>(() => {
@@ -59,25 +60,29 @@ export const NotebookShell = (): JSX.Element => {
   };
 
   return (
-    <div className="flex">
-      <div className="w-1/5 bg-white p-4 rounded-lg">
-        <Sidebar
-          notebooks={state.notebooks}
-          selectedNotebook={state.activeNotebookId || ""}
-          onSelectNotebook={selectNotebook}
-          addNotebook={addNewNotebook}
-        />
-      </div>
-      <div className="w-4/5 bg-white p-4 rounded-lg">
-        {state.activeNotebookId && (
-          <Notebook
-            id={state.activeNotebookId}
-            storedCells={cells}
-            onCellsChange={(cells: Cell[]) =>
-              editNotebook(state.activeNotebookId as string, cells)
-            }
+    <div>
+      <MainNav />
+      <div className="flex">
+        <div className="w-1/5 bg-white p-4 rounded-lg">
+          <Sidebar
+            notebooks={state.notebooks}
+            selectedNotebook={state.activeNotebookId || ""}
+            onSelectNotebook={selectNotebook}
+            addNotebook={addNewNotebook}
           />
-        )}
+        </div>
+        <div className="w-4/5 bg-white p-4 rounded-lg">
+          {state.activeNotebookId && (
+            <Notebook
+              id={state.activeNotebookId}
+              key={state.activeNotebookId}
+              storedCells={cells}
+              onCellsChange={(cells: Cell[]) =>
+                editNotebook(state.activeNotebookId as string, cells)
+              }
+            />
+          )}
+        </div>
       </div>
     </div>
   );
