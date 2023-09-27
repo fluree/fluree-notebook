@@ -1,44 +1,24 @@
 import MonacoCell from "../monaco-cell";
-import { AddCell } from "./buttons/add-cell";
+
 import { RunButton } from "./buttons/run";
 import { useState } from "react";
 export interface IQueryProps {}
-
-const createJson = {
-  ledger: "notebook1",
-  defaultContext: {
-    id: "@id",
-    type: "@type",
-    xsd: "http://www.w3.org/2001/XMLSchema#",
-    rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-    rdfs: "http://www.w3.org/2000/01/rdf-schema#",
-    sh: "http://www.w3.org/ns/shacl#",
-    schema: "http://schema.org/",
-    skos: "http://www.w3.org/2008/05/skos#",
-    wiki: "https://www.wikidata.org/wiki/",
-    f: "https://ns.flur.ee/ledger#",
-    ex: "http://example.org/",
-  },
-  txn: { message: "ledger created" },
-};
 
 export const QueryCell = ({
   value,
   createCell,
   language,
-  addCell,
+
+  onChange,
 }: {
   value: string;
   createCell: boolean;
   language: "sparql" | "json";
   onClick?: (element: React.MouseEvent<HTMLElement>) => void;
-  addCell: (value: "Markdown" | "SPARQL" | "FLUREEQL") => void;
+
+  onChange: (value: string) => void;
 }): JSX.Element => {
-  if (createCell) {
-    value = JSON.stringify(createJson, null, 2);
-  }
   const [result, setResult] = useState<string | null>(null);
-  const [cellValue, setCellValue] = useState<string>(value);
 
   const flureePost = async () => {
     let contentType: string;
@@ -48,13 +28,13 @@ export const QueryCell = ({
       contentType = "application/sparql-query";
     } else {
       contentType = "application/json";
-      const value: object = JSON.parse(cellValue);
+      const valueObject: object = JSON.parse(value);
       const hasLedgerProperty = Object.prototype.hasOwnProperty.call(
-        value,
+        valueObject,
         "ledger"
       );
       const hasGraphProperty = Object.prototype.hasOwnProperty.call(
-        value,
+        valueObject,
         "@graph"
       );
       if (hasLedgerProperty) {
@@ -70,16 +50,17 @@ export const QueryCell = ({
       headers: {
         "Content-Type": contentType,
       },
-      body: cellValue,
+      body: value,
     })
       .then((r) => r.json())
       .then((d) => setResult(JSON.stringify(d, null, 2)))
       .catch((e) => console.log(e));
   };
 
-  const handleChange = (value: string | undefined, _event: any) => {
-    if (typeof value === "string") {
-      setCellValue(value);
+  const handleChange = (newValue: string | undefined, _event: any) => {
+    console.log("HANDLE CHANGE? ", newValue);
+    if (typeof newValue === "string") {
+      onChange(newValue);
     }
   };
   return (

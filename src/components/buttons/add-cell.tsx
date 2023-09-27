@@ -54,7 +54,7 @@ export const Chevron = ({ down }: { down: boolean }): JSX.Element => {
 export const AddCell = ({
   addCell,
 }: {
-  addCell: (value: string) => void;
+  addCell: (value: "Markdown" | "FLUREEQL" | "SPARQL") => void;
 }): JSX.Element => {
   const [showList, setShowList] = useState(false);
   return (

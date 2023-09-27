@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import MarkdownCell from "./markdown-cell";
 import type { NotebookProps } from "./types/index.d.ts";
 import { QueryCell } from "./components/query-cell.tsx";
@@ -21,19 +20,18 @@ const Cell: React.FC<CellProps> = ({
   createCell,
   language = "json",
   onDelete,
-  addCell,
 }) => {
   return (
     <div>
       {type === "markdown" && (
-        <MarkdownCell value={value} onChange={onChange} addCell={addCell} />
+        <MarkdownCell value={value} onChange={onChange} />
       )}
       {type === "monaco" && (
         <QueryCell
           value={value}
           createCell={createCell}
           language={language}
-          addCell={addCell}
+          onChange={onChange}
         />
       )}
     </div>
@@ -45,22 +43,12 @@ const Notebook: React.FC<NotebookProps> = ({
   storedCells,
   onCellsChange,
 }) => {
-  const [cells, setCells] = useState<
-    {
-      type: "markdown" | "monaco";
-      value: string;
-      createCell?: boolean;
-      language?: "json" | "sparql";
-    }[]
-  >(storedCells);
-
   console.log("STORED CELLS: ", storedCells);
 
   const addCell = (value: "Markdown" | "SPARQL" | "FLUREEQL") => {
     let newVal: string = "";
     let language: "json" | "sparql" = "json";
     let type: "monaco" | "markdown" = "monaco";
-    console.log("ADD CELL CLICKE WITH VALUE ", value);
 
     if (value === "Markdown") {
       type = "markdown";
@@ -85,15 +73,16 @@ const Notebook: React.FC<NotebookProps> = ({
       );
     }
 
-    const newCells = [...cells, { type, value: newVal, language: language }];
+    const newCells = [
+      ...storedCells,
+      { type, value: newVal, language: language },
+    ];
     console.log("NEW CELLS: ", newCells);
-    setCells(newCells);
     onCellsChange(newCells);
   };
 
   const deleteCell = (idx: number) => {
-    const newCells = cells.filter((_, index) => index !== idx);
-    setCells(newCells);
+    const newCells = storedCells.filter((_, index) => index !== idx);
     onCellsChange(newCells);
   };
 
@@ -102,12 +91,12 @@ const Notebook: React.FC<NotebookProps> = ({
       {storedCells.map((cell, idx) => (
         <div className="cell">
           <Cell
-            key={idx}
+            key={`${id}-${idx}`}
             {...cell}
             onChange={(newValue) => {
-              const newCells = [...cells];
+              console.log("NEW VALUE: ", newValue);
+              const newCells = [...storedCells];
               newCells[idx].value = newValue;
-              setCells(newCells);
               onCellsChange(newCells);
             }}
             onDelete={() => deleteCell(idx)}

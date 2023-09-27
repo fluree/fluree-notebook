@@ -1,11 +1,30 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sidebar } from "./components/sidebar.tsx";
 import Notebook from "./notebook.tsx";
 import type { NotebookState, Cell } from "./types/index";
 import { MainNav } from "./components/main-nav.tsx";
 
 export const NotebookShell = (): JSX.Element => {
+  const createJson = {
+    ledger: "notebook1",
+    defaultContext: {
+      id: "@id",
+      type: "@type",
+      xsd: "http://www.w3.org/2001/XMLSchema#",
+      rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      rdfs: "http://www.w3.org/2000/01/rdf-schema#",
+      sh: "http://www.w3.org/ns/shacl#",
+      schema: "http://schema.org/",
+      skos: "http://www.w3.org/2008/05/skos#",
+      wiki: "https://www.wikidata.org/wiki/",
+      f: "https://ns.flur.ee/ledger#",
+      ex: "http://example.org/",
+    },
+    txn: { message: "ledger created" },
+  };
+
   const [state, setState] = useState<NotebookState>(() => {
+    //TODO add results with the cells
     const localState = localStorage.getItem("notebookState");
     if (localState) {
       return JSON.parse(localState);
@@ -13,14 +32,10 @@ export const NotebookShell = (): JSX.Element => {
     return { notebooks: [], activeNotebookId: null };
   });
 
-  const [cells, setCells] = useState<
-    {
-      type: "markdown" | "monaco";
-      value: string;
-      createCell?: boolean;
-      language?: "json" | "sparql";
-    }[]
-  >([]);
+  useEffect(() => {
+    // TODO: remove results before storing to localStorage
+    localStorage.setItem("notebookState", JSON.stringify(state));
+  }, [state]);
 
   const addNewNotebook = () => {
     const id = Math.random().toString(36).substring(7); // generate a unique id
@@ -31,7 +46,12 @@ export const NotebookShell = (): JSX.Element => {
         {
           id,
           cells: [
-            { value: "", language: "json", type: "monaco", createCell: true },
+            {
+              value: JSON.stringify(createJson, null, 2),
+              language: "json",
+              type: "monaco",
+              createCell: true,
+            },
           ],
         },
       ],
@@ -41,16 +61,12 @@ export const NotebookShell = (): JSX.Element => {
 
   const selectNotebook = (id: string) => {
     setState((prevState) => ({ ...prevState, activeNotebookId: id }));
-    const cells = state.notebooks.find((n) => n.id === id)?.cells || [];
-    console.log("CELLS: ", cells);
-    setCells(cells);
   };
 
   const editNotebook = (id: string, cells: Cell[]) => {
     console.log("editNotebook cells ", cells);
     console.log("editNotebook id ", id);
 
-    setCells(cells);
     setState((prevState) => {
       const notebooks = prevState.notebooks.map((notebook) =>
         notebook.id === id ? { ...notebook, cells } : notebook
@@ -76,7 +92,10 @@ export const NotebookShell = (): JSX.Element => {
             <Notebook
               id={state.activeNotebookId}
               key={state.activeNotebookId}
-              storedCells={cells}
+              storedCells={
+                state.notebooks.find((n) => n.id === state.activeNotebookId)
+                  ?.cells
+              }
               onCellsChange={(cells: Cell[]) =>
                 editNotebook(state.activeNotebookId as string, cells)
               }
