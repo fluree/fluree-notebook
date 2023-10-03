@@ -1,102 +1,112 @@
-import React, { useState } from 'react';
-import MarkdownCell from './markdown-cell';
-import MonacoCell from './monaco-cell';
+import MarkdownCell from "./markdown-cell";
+import type { NotebookProps } from "./types/index.d.ts";
+import { QueryCell } from "./components/query-cell.tsx";
+import { AddCell } from "./components/buttons/add-cell.tsx";
 
 interface CellProps {
-  type: 'markdown' | 'monaco';
+  type: "markdown" | "monaco";
   value: string;
   onChange: (value: string) => void;
   onDelete: () => void;
   createCell?: boolean;
-  language?: 'json' | 'sparql'
+  language?: "json" | "sparql";
+  addCell: (value: "Markdown" | "SPARQL" | "FLUREEQL") => void;
 }
 
-const Cell: React.FC<CellProps> = ({ type, value, onChange, createCell, language="json", onDelete }) => {
-    return (
-      <div className="border-2 border-gray-200 rounded-xl p-4 m-4 bg-gray-50 relative">
-       <button 
-         className="absolute  w-4 h-5 right-2 bg-red-500 text-white text-center rounded text-sm"
-         onClick={onDelete}
-       >
-
-        x
-       </button>
-        {type === 'markdown' &&
-         <MarkdownCell value={value} onChange={onChange} />}
-       {type === 'monaco' && 
-         <MonacoCell value={value} createCell={createCell} language={language}/>}
-
-      </div>
-    );
+const Cell: React.FC<CellProps> = ({
+  type,
+  value,
+  onChange,
+  createCell,
+  language = "json",
+  onDelete,
+}) => {
+  return (
+    <div>
+      {type === "markdown" && (
+        <MarkdownCell value={value} onChange={onChange} />
+      )}
+      {type === "monaco" && (
+        <QueryCell
+          value={value}
+          createCell={createCell ? createCell : undefined}
+          language={language}
+          onChange={onChange}
+        />
+      )}
+    </div>
+  );
 };
 
-const Notebook: React.FC = () => {
-  const [cells, setCells] = useState<
-    { type: 'markdown' | 'monaco'; value: string; createCell?: boolean, language?: 'json' | 'sparql' }[]
-  >([
-    {
-      type: 'markdown',
-      value:
-        '## Fluree Notebook\n- Run `http-api-gateway` on port 58090\n - `docker run -p 58090:8090 fluree/http-api-gateway`\n - "Transact" the first cell to create the Ledger',
-    },
-    { type: 'monaco', value: '{ "from": "notebook1" }', createCell: true },
-  ]);
+const Notebook: React.FC<NotebookProps> = ({
+  id,
+  storedCells,
+  onCellsChange,
+}) => {
+  console.log("STORED CELLS: ", storedCells);
 
-  const addCell = (type: 'markdown' | 'monaco', language: 'sparql' | 'json'="json") => {
-    let newVal:string = ""
+  const addCell = (value: "Markdown" | "SPARQL" | "FLUREEQL") => {
+    let newVal: string = "";
+    let language: "json" | "sparql" = "json";
+    let type: "monaco" | "markdown" = "monaco";
 
-    if(type === 'markdown') {
-      newVal = '## New Markdown Cell\n Click inside to edit'
+    if (value === "Markdown") {
+      type = "markdown";
+      newVal = "## New Markdown Cell\n Click inside to edit";
     }
 
-    if(type === 'monaco' && language === 'sparql') {
+    if (value === "SPARQL") {
+      language = "sparql";
+
       newVal = "SELECT ?s \nFROM <notebook1>\nWHERE {\n?s <type> rdfs:Class\n}";
     }
 
-    if(type === 'monaco' && language === 'json') {
-      newVal = JSON.stringify({from: 'notebook1', select: '?s', where: [['?s', 'rdf:type', 'rdfs:Class']]}, null, 2);
+    if (value === "FLUREEQL") {
+      newVal = JSON.stringify(
+        {
+          from: "notebook1",
+          select: "?s",
+          where: [["?s", "rdf:type", "rdfs:Class"]],
+        },
+        null,
+        2
+      );
     }
 
-    setCells([...cells, { type, value: newVal, language: language }]);
+    const newCells = [
+      ...storedCells,
+      { type, value: newVal, language: language },
+    ];
+    console.log("NEW CELLS: ", newCells);
+    onCellsChange(newCells);
   };
 
   const deleteCell = (idx: number) => {
-    setCells(cells.filter((_, index) => index !== idx));
-  }
+    const newCells = storedCells.filter((_, index) => index !== idx);
+    onCellsChange(newCells);
+  };
 
   return (
     <div>
-      {cells.map((cell, idx) => (
-        <Cell
-          key={idx}
-          {...cell}
-          onChange={(newValue) => {
-            const newCells = [...cells];
-            newCells[idx].value = newValue;
-            setCells(newCells);
-          }}
-          onDelete={() => deleteCell(idx)}
-        />
-
+      {storedCells.map((cell, idx) => (
+        <div className="cell">
+          <Cell
+            key={`${id}-${idx}`}
+            {...cell}
+            onChange={(newValue) => {
+              console.log("NEW VALUE: ", newValue);
+              const newCells = [...storedCells];
+              newCells[idx].value = newValue;
+              onCellsChange(newCells);
+            }}
+            onDelete={() => deleteCell(idx)}
+            addCell={addCell}
+          />
+        </div>
       ))}
-      <button
-        className="m-4 px-4 py-2 bg-blue-600 text-white rounded"
-        onClick={() => addCell('markdown')}
-      >
-        Add Markdown Cell
-      </button>
-      <button
-        className="m-4 px-4 py-2 bg-blue-600 text-white rounded"
-        onClick={() => addCell('monaco')}
-      >
-        Add FlureeQL Cell
-      </button>
-      <button
-        className="m-4 px-4 py-2 bg-blue-600 text-white rounded"
-        onClick={() => addCell('monaco', 'sparql')}
-      >
-        Add SQARQL Cell
-      </button>
+      <div className="py-2">
+        <AddCell addCell={addCell} />
+      </div>
     </div>
   );
 };
