@@ -29,7 +29,7 @@ const Cell: React.FC<CellProps> = ({
       {type === "monaco" && (
         <QueryCell
           value={value}
-          createCell={createCell}
+          createCell={createCell ? createCell : undefined}
           language={language}
           onChange={onChange}
         />

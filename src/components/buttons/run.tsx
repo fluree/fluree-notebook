@@ -7,7 +7,6 @@ export const RunButton = ({
   onClick?: (element: React.MouseEvent<HTMLElement>) => void;
   buttonText: string;
 }): JSX.Element => {
-  console.log("VALUE: ", value);
   return (
     <div className="py-2">
       <button

@@ -6,8 +6,9 @@ import { MainNav } from "./components/main-nav.tsx";
 
 export const NotebookShell = (): JSX.Element => {
   const createJson = {
-    ledger: "notebook1",
-    defaultContext: {
+    "@id": "notebook1",
+    "@context": { f: "https://ns.flur.ee/ledger#" },
+    "f:defaultContext": {
       id: "@id",
       type: "@type",
       xsd: "http://www.w3.org/2001/XMLSchema#",
@@ -20,7 +21,7 @@ export const NotebookShell = (): JSX.Element => {
       f: "https://ns.flur.ee/ledger#",
       ex: "http://example.org/",
     },
-    txn: { message: "ledger created" },
+    "@graph": [{ message: "ledger created" }],
   };
 
   const [state, setState] = useState<NotebookState>(() => {

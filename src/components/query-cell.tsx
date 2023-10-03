@@ -8,11 +8,10 @@ export const QueryCell = ({
   value,
   createCell,
   language,
-
   onChange,
 }: {
   value: string;
-  createCell: boolean;
+  createCell?: boolean;
   language: "sparql" | "json";
   onClick?: (element: React.MouseEvent<HTMLElement>) => void;
 
@@ -20,27 +19,25 @@ export const QueryCell = ({
 }): JSX.Element => {
   const [result, setResult] = useState<string | null>(null);
 
-  const flureePost = async () => {
+  const flureePost = async (element) => {
     let contentType: string;
     let endPoint: string = "query";
+
+    const elementValue = element.target.value;
 
     if (language === "sparql") {
       contentType = "application/sparql-query";
     } else {
       contentType = "application/json";
       const valueObject: object = JSON.parse(value);
-      const hasLedgerProperty = Object.prototype.hasOwnProperty.call(
-        valueObject,
-        "ledger"
-      );
       const hasGraphProperty = Object.prototype.hasOwnProperty.call(
         valueObject,
         "@graph"
       );
-      if (hasLedgerProperty) {
+      if (elementValue === "create") {
         endPoint = "create";
       }
-      if (hasGraphProperty) {
+      if (hasGraphProperty && elementValue !== "create") {
         endPoint = "transact";
       }
     }
