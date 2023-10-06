@@ -28,11 +28,12 @@ UI for interacting with Fluree and saving queries/transactions in the form noteb
 
 ### Running the Application:
 
-- To start the notebook UI, node server, and the http-api-gateway all at once, run:
+- To start the notebook UI, node server, and the http-api-gateway all at once using Docker, run:
 
     ```bash
     ./run.sh
     ```
+
 
 - Alternatively, if you wish to only start the UI (and not the node server or the http-api-gateway), use:
 
