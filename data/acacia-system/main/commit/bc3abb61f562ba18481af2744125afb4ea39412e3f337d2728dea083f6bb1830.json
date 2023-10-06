@@ -1,0 +1,1 @@
+{"@context":{"f":"https://ns.flur.ee/ledger#","f:assert":{"@container":"@graph"}},"@id":"fluree:db:sha256:bb2o5zgbzvflcpesokg2ho7wsryw2kzoh6cnm45vhlr6ks7glxv4c","@type":["f:DB"],"f:assert":[{"@id":"_:f211106232532992","message":"New ledger created"}],"f:flakes":9,"f:size":832,"f:t":1,"f:v":0}

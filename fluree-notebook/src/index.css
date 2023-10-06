@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html.dark {
+    background-color: rgb(17, 17, 17);
+}
+
+.doc * {
+    transition: background-color 0.25s ease-in-out;
+    /* transition: 0.3s ease-in-out; */
+}
+
+.prose pre {
+    filter: invert(1) hue-rotate(180deg) brightness(1.01);
+}

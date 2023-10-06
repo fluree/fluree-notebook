@@ -1,0 +1,33 @@
+version: "3"
+services:
+  fluree_notebook:
+    build:
+      context: ./fluree-notebook
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./fluree-notebook:/app
+    depends_on:
+      - node_server
+    command: sh -c "npm rebuild esbuild && yarn dev"
+
+  node_server:
+    build:
+      context: ./node-server
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./data:/app/data
+      - ./node-server:/app
+    depends_on:
+      - fluree
+
+  fluree:
+    image: fluree/http-api-gateway:latest
+    ports:
+      - "58090:8090"
+    volumes:
+      - "./data:/opt/fluree-http-api-gateway/data"
+
