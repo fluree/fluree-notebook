@@ -14,3 +14,8 @@ html.dark {
 .prose pre {
     filter: invert(1) hue-rotate(180deg) brightness(1.01);
 }
+
+.icon-button-md svg {
+    width: 22px;
+    height: 22px;
+}

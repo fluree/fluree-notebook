@@ -53,16 +53,18 @@ const MonacoCell: React.FC<{
   }
 
   return (
-    <div className="flex">
-      <Editor
-        language={language}
-        theme="default"
-        options={{ padding: { top: 10 }, minimap: { enabled: false } }}
-        value={value}
-        height={'300px'}
-        onChange={changeCallback ? changeCallback : undefined}
-        onMount={setEditorTheme}
-      />
+    <div>
+      <div className="flex">
+        <Editor
+          language={language}
+          theme="default"
+          options={{ padding: { top: 10 }, minimap: { enabled: false } }}
+          value={value}
+          height={'300px'}
+          onChange={changeCallback ? changeCallback : undefined}
+          onMount={setEditorTheme}
+        />
+      </div>
     </div>
   );
 };

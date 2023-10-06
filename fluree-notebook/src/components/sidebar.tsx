@@ -35,14 +35,14 @@ export const Sidebar = ({
           Notebooks
         </div>
         <button onClick={addNotebook}>
-          <Tooltip size="small" distance="5" title="New Notebook">
+          <Tooltip arrow size="small" animation="fade" title="New Notebook">
             <Add />
           </Tooltip>
         </button>
       </div>
       <div
         className={`bg-fluree-no-fill dark:bg-ui-main-800 flex flex-col gap-0 
-      items-start justify-start self-stretch shrink-0 pb-[1px] relative border-t-[1px] border-b-2 border-ui-neutral-500`}
+      items-start justify-start self-stretch shrink-0 relative border-t-[1px] border-ui-neutral-500`}
       >
         {notebooks.map((notebook, index) => (
           <SidebarItem

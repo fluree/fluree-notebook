@@ -149,7 +149,7 @@ export const SidebarItem = ({
             <Bars2 />
           </span>
 
-          <span className="hover:bg-[rgba(10,10,10,0.3)] rounded-full p-1 flex items-center justify-center mr-1">
+          <span className="hover:bg-[rgba(10,10,10,0.3)] rounded-full flex items-center justify-center mr-1 ml-2">
             <SidebarMenu id={id} setEditing={setEditing} inputRef={inputRef} />
           </span>
         </div>

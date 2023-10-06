@@ -8,6 +8,9 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+node-server/node_modules
+fluree-notebook/note_modules
+data
 dist
 dist-ssr
 *.local

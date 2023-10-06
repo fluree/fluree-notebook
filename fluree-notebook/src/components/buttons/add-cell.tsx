@@ -21,7 +21,7 @@ export const Chevron = ({ down }: { down: boolean }): JSX.Element => {
       >
         <path
           d="M14.25 6.75L9 12L3.75 6.75"
-          stroke="#091133"
+          stroke="currentColor"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -41,7 +41,7 @@ export const Chevron = ({ down }: { down: boolean }): JSX.Element => {
       >
         <path
           d="M3.75 11.25L9 6L14.25 11.25"
-          stroke="#091133"
+          stroke="currentColor"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -61,17 +61,19 @@ export const AddCell = ({
     <div className="flex flex-col dark:text-white">
       <Line />
       <button onClick={() => setShowList(!showList)}>
-        <div className="bg-ui-main-50 rounded-lg p-3 flex flex-col gap-0 items-start justify-start w-[180px] relative">
+        <div className="bg-ui-main-100 dark:bg-ui-neutral-700 rounded-lg p-3 flex flex-col gap-0 items-start justify-start w-[180px] relative">
           <div className="flex flex-row gap-0 items-center justify-start self-stretch shrink-0 relative">
             <div
-              className="text-ui-main-900 text-left relative flex-1 flex items-center justify-start"
+              className="text-ui-main-900 dark:text-white text-left relative flex-1 flex items-center justify-start"
               style={{
                 font: "var(--leading-tight-text-sm-font-normal, 400 14px/125% 'Inter', sans-serif)",
               }}
             >
-              Add Cell{' '}
+              Add Cell
             </div>
-            <Chevron down={!showList} />
+            <span className="dark:text-white">
+              <Chevron down={!showList} />
+            </span>
           </div>
         </div>
       </button>

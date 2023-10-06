@@ -71,7 +71,10 @@ const SidebarMenu = ({ id, setEditing, inputRef }) => {
   };
 
   return (
-    <Menu as="div" className="relative inline-flex text-left">
+    <Menu
+      as="div"
+      className="relative inline-flex items-center justify-center text-left w-[100%] h-[100%] rounded-full p-[5px] pr-[4px]"
+    >
       <Menu.Button className="inline-flex justify-center items-center rounded-full">
         <DotsVerticalSolid />
       </Menu.Button>
@@ -85,7 +88,7 @@ const SidebarMenu = ({ id, setEditing, inputRef }) => {
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <Menu.Items className="absolute left-0 z-[100] mt-2 w-56 origin-top-right divide-y divide-gray-100 dark:divide-ui-neutral-800 rounded-md bg-white dark:bg-ui-neutral-900 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+        <Menu.Items className="absolute left-1 -top-1 z-[100] mt-2 w-56 origin-top-right divide-y divide-gray-100 dark:divide-ui-neutral-800 rounded-md bg-white dark:bg-ui-neutral-900 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
           <div className="py-1">
             <Menu.Item>
               {({ active }) => (

@@ -1,7 +1,19 @@
-import MonacoCell from "../monaco-cell";
+import MonacoCell from '../monaco-cell';
 
-import { RunButton } from "./buttons/run";
-import { useState } from "react";
+import { RunButton } from './buttons/run';
+import { useState } from 'react';
+import { Plus } from './icons/plus';
+import { Bolt } from './icons/bolt';
+import { Search } from './icons/search';
+import { Sparkles } from './icons/sparkles';
+import { Clipboard } from './icons/clipboard';
+import { DocumentUp } from './icons/document-up';
+import { DocumentDown } from './icons/document-down';
+import { Duplicate } from './icons/duplicate';
+import { Bars2 } from './icons/bars-2';
+import { Handle } from './icons/handle';
+import { Delete } from './icons/delete';
+import IconButton from './buttons/icon-button';
 export interface IQueryProps {}
 
 export const QueryCell = ({
@@ -12,7 +24,7 @@ export const QueryCell = ({
 }: {
   value: string;
   createCell?: boolean;
-  language: "sparql" | "json";
+  language: 'sparql' | 'json';
   onClick?: (element: React.MouseEvent<HTMLElement>) => void;
 
   onChange: (value: string) => void;
@@ -21,31 +33,31 @@ export const QueryCell = ({
 
   const flureePost = async (element) => {
     let contentType: string;
-    let endPoint: string = "query";
+    let endPoint: string = 'query';
 
     const elementValue = element.target.value;
 
-    if (language === "sparql") {
-      contentType = "application/sparql-query";
+    if (language === 'sparql') {
+      contentType = 'application/sparql-query';
     } else {
-      contentType = "application/json";
+      contentType = 'application/json';
       const valueObject: object = JSON.parse(value);
       const hasGraphProperty = Object.prototype.hasOwnProperty.call(
         valueObject,
-        "@graph"
+        '@graph'
       );
-      if (elementValue === "create") {
-        endPoint = "create";
+      if (elementValue === 'create') {
+        endPoint = 'create';
       }
-      if (hasGraphProperty && elementValue !== "create") {
-        endPoint = "transact";
+      if (hasGraphProperty && elementValue !== 'create') {
+        endPoint = 'transact';
       }
     }
 
     fetch(`http://localhost:58090/fluree/${endPoint}`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": contentType,
+        'Content-Type': contentType,
       },
       body: value,
     })
@@ -55,14 +67,57 @@ export const QueryCell = ({
   };
 
   const handleChange = (newValue: string | undefined, _event: any) => {
-    console.log("HANDLE CHANGE? ", newValue);
-    if (typeof newValue === "string") {
+    console.log('HANDLE CHANGE? ', newValue);
+    if (typeof newValue === 'string') {
       onChange(newValue);
     }
   };
   return (
     <div>
-      <div className="bg-ui-surface-lite-050 rounded-md border-solid border-ui-main-400 border w-[99%] h-[250px] relative overflow-hidden">
+      <div className="flex -ml-[10px] w-[calc(100%)] items-center justify-start pl-8">
+        <div
+          id="monaco-toolbar"
+          className={`bg-ui-main-300 dark:bg-ui-neutral-700 bg-opacity-60 px-4 pt-[5px] pb-[5px] rounded-t-md
+          flex gap-3`}
+        >
+          <IconButton>
+            <Search />
+          </IconButton>
+          <IconButton>
+            <Bolt />
+          </IconButton>
+          <IconButton>
+            <Plus />
+          </IconButton>
+          <span className="border-l-[1px] opacity-20 -mt-[2px] -mb-[2px]"></span>
+          <IconButton>
+            <Sparkles />
+          </IconButton>
+          <IconButton>
+            <Clipboard />
+          </IconButton>
+          <IconButton>
+            <Handle />
+          </IconButton>
+          <span className="border-l-[1px] opacity-20 -mt-[2px] -mb-[2px]"></span>
+          <IconButton>
+            <Duplicate />
+          </IconButton>
+          <IconButton>
+            <DocumentDown />
+          </IconButton>
+          <IconButton>
+            <DocumentUp />
+          </IconButton>
+          <span className="border-l-[1px] opacity-20 -mt-[2px] -mb-[2px]"></span>
+          <IconButton>
+            <Delete />
+          </IconButton>
+        </div>
+      </div>
+      <div
+        className={`bg-ui-surface-lite-050 rounded-md border-solid border-ui-main-400 border w-[99%] h-[250px] relative overflow-hidden`}
+      >
         <MonacoCell
           value={value}
           language={language}
@@ -73,7 +128,7 @@ export const QueryCell = ({
           className="flex flex-row absolute bg-[#ffffff] rounded-[3px] w-[203.6px] h-[28.91px] right-0 top-[2.35px] "
           style={{
             boxShadow:
-              "var(--shadow-sm-box-shadow, 0px 1px 2px 0px rgba(0, 0, 0, 0.08))",
+              'var(--shadow-sm-box-shadow, 0px 1px 2px 0px rgba(0, 0, 0, 0.08))',
           }}
         >
           <div className="flex p-3 pt-1">

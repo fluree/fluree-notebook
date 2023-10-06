@@ -119,7 +119,7 @@ export const NotebookShell = (): JSX.Element => {
           onSelectNotebook={selectNotebook}
           addNotebook={addNewNotebook}
         />
-        <div className="w-4/5 bg-white dark:bg-ui-neutral-900 p-4 rounded-lg">
+        <div className="w-[calc(100%)] bg-white dark:bg-ui-neutral-900 py-4 pl-5 rounded-lg">
           {state.activeNotebookId && (
             <Notebook
               id={state.activeNotebookId}
