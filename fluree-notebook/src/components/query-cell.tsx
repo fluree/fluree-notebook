@@ -80,37 +80,37 @@ export const QueryCell = ({
           className={`bg-ui-main-300 dark:bg-ui-neutral-700 bg-opacity-60 px-4 pt-[5px] pb-[5px] rounded-t-md
           flex gap-3`}
         >
-          <IconButton>
+          <IconButton tooltip="Query">
             <Search />
           </IconButton>
-          <IconButton>
+          <IconButton tooltip="Transact">
             <Bolt />
           </IconButton>
-          <IconButton>
+          <IconButton tooltip="Create Ledger">
             <Plus />
           </IconButton>
           <span className="border-l-[1px] opacity-20 -mt-[2px] -mb-[2px]"></span>
-          <IconButton>
+          <IconButton tooltip="Autoformat">
             <Sparkles />
           </IconButton>
-          <IconButton>
+          <IconButton tooltip="Copy Contents">
             <Clipboard />
           </IconButton>
-          <IconButton>
+          <IconButton tooltip="Move Cell">
             <Handle />
           </IconButton>
           <span className="border-l-[1px] opacity-20 -mt-[2px] -mb-[2px]"></span>
-          <IconButton>
+          <IconButton tooltip="Duplicate Cell">
             <Duplicate />
           </IconButton>
-          <IconButton>
+          <IconButton tooltip="Create Cell Below">
             <DocumentDown />
           </IconButton>
-          <IconButton>
+          <IconButton tooltip="Create Cell Above">
             <DocumentUp />
           </IconButton>
           <span className="border-l-[1px] opacity-20 -mt-[2px] -mb-[2px]"></span>
-          <IconButton>
+          <IconButton tooltip="Delete Cell">
             <Delete />
           </IconButton>
         </div>
