@@ -1,1 +1,0 @@
-{"@context":{"f":"https://ns.flur.ee/ledger#","f:assert":{"@container":"@graph"}},"@id":"fluree:db:sha256:bbfmsqf5a5npfgmdjovcs4mado7znm2whlisl3oaps54ytmjycrmm","@type":["f:DB"],"f:assert":[{"@id":"_:f211106232532992","new-ledger":{"@value":true}}],"f:flakes":9,"f:size":803,"f:t":1,"f:v":0}

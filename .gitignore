@@ -10,7 +10,7 @@ lerna-debug.log*
 node_modules
 node-server/node_modules
 fluree-notebook/note_modules
-data
+data/*
 dist
 dist-ssr
 *.local
