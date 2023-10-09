@@ -11,6 +11,7 @@ interface CellProps {
   createCell?: boolean;
   language?: 'json' | 'sparql';
   addCell: (value: 'Markdown' | 'SPARQL' | 'FLUREEQL') => void;
+  index: number;
 }
 
 const Cell: React.FC<CellProps> = ({
@@ -20,11 +21,12 @@ const Cell: React.FC<CellProps> = ({
   createCell,
   language = 'json',
   onDelete,
+  index,
 }) => {
   return (
     <div className="dark:text-white">
       {type === 'markdown' && (
-        <MarkdownCell value={value} onChange={onChange} />
+        <MarkdownCell index={index} value={value} onChange={onChange} />
       )}
       {type === 'monaco' && (
         <QueryCell
@@ -32,6 +34,7 @@ const Cell: React.FC<CellProps> = ({
           createCell={createCell ? createCell : undefined}
           language={language}
           onChange={onChange}
+          index={index}
         />
       )}
     </div>
@@ -101,6 +104,7 @@ const Notebook: React.FC<NotebookProps> = ({
             }}
             onDelete={() => deleteCell(idx)}
             addCell={addCell}
+            index={idx}
           />
         </div>
       ))}

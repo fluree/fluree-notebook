@@ -35,7 +35,7 @@ export const Sidebar = ({
           Notebooks
         </div>
         <button onClick={addNotebook}>
-          <Tooltip arrow size="small" animation="fade" title="New Notebook">
+          <Tooltip distance="4" title="New Notebook">
             <Add />
           </Tooltip>
         </button>

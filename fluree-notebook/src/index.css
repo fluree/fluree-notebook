@@ -6,10 +6,9 @@ html.dark {
     background-color: rgb(17, 17, 17);
 }
 
-.doc * {
+/* .doc * {
     transition: background-color 0.25s ease-in-out;
-    /* transition: 0.3s ease-in-out; */
-}
+} */
 
 .prose pre {
     filter: invert(1) hue-rotate(180deg) brightness(1.01);
@@ -18,4 +17,5 @@ html.dark {
 .icon-button-md svg {
     width: 22px;
     height: 22px;
+    pointer-events: none;
 }

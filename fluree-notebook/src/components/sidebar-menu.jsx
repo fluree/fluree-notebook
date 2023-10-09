@@ -45,7 +45,6 @@ const SidebarMenu = ({ id, setEditing, inputRef }) => {
   const duplicateNotebook = () => {
     let localState = JSON.parse(localStorage.getItem('notebookState'));
     let existingNames = localState.notebooks.map((p) => p.name);
-    console.log(existingNames);
     for (var i = 0; i < localState.notebooks.length; i++) {
       if (localState.notebooks[i].id === id) {
         let newNotebook = JSON.parse(JSON.stringify(localState.notebooks[i]));

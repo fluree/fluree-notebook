@@ -59,7 +59,6 @@ export const NotebookShell = (): JSX.Element => {
     let existingTabs = localStorage.getItem('notebookState');
     existingTabs = JSON.parse(existingTabs);
     existingTabs = existingTabs.notebooks;
-    console.log(existingTabs);
 
     let tabNames = existingTabs.map((tab) => tab.name);
     let newName = '';
@@ -98,9 +97,6 @@ export const NotebookShell = (): JSX.Element => {
   };
 
   const editNotebook = (id: string, cells: Cell[]) => {
-    console.log('editNotebook cells ', cells);
-    console.log('editNotebook id ', id);
-
     setState((prevState) => {
       const notebooks = prevState.notebooks.map((notebook) =>
         notebook.id === id ? { ...notebook, cells } : notebook

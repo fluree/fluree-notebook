@@ -71,12 +71,6 @@ export const SidebarItem = ({
   const drop = (e) => {
     e.preventDefault();
     var data = e.dataTransfer.getData('text');
-    console.log(`drop index ${data} at index ${index}`);
-    // e.target.appendChild(document.getElementById(data));
-
-    console.log(index);
-    console.log(data);
-
     let localState = JSON.parse(localStorage.getItem('notebookState'));
     let notebooks = localState.notebooks;
     if (

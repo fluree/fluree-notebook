@@ -22,7 +22,10 @@ const MarkdownCell: React.FC<{
       </button>
     </div>
   ) : (
-    <div className="markdown-cell m-3" onClick={() => setIsEditing(true)}>
+    <div
+      className="markdown-cell m-2 mt-6 mb-8"
+      onClick={() => setIsEditing(true)}
+    >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         className="prose dark:hue-rotate-180 dark:invert"
