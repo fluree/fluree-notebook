@@ -99,7 +99,7 @@ const MarkdownCell: React.FC<{
   };
 
   const startEditing = () => {
-    // start editing
+    // start editing ... test commit
     let localState = JSON.parse(localStorage.getItem('notebookState'));
     let activeNotebookId = localState.activeNotebookId;
     let activeNotebookIndex = localState.notebooks.findIndex(
