@@ -34,6 +34,8 @@ export default {
         'ui-main-600': '#00a0d1',
         'ui-main-800': '#00518c',
         'ui-main-900': '#091133',
+        'ui-purple-400': '#ac94fa',
+        'ui-purple-500': '#9061f9',
       },
       transitionProperty: {
         height: 'height',

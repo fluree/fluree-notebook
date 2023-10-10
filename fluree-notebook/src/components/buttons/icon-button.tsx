@@ -14,7 +14,7 @@ const IconButton = ({
       <span
         data-tooltip={tooltip}
         onClick={onClick}
-        className={`rounded-full hover:bg-ui-main-400 dark:hover:bg-ui-neutral-800 
+        className={`relative rounded-full hover:bg-ui-main-400 dark:hover:bg-ui-neutral-800 
     cursor-pointer p-[6px] bg-opacity-20 flex items-center justify-center icon-button-md -m-[]`}
       >
         {children}

@@ -92,8 +92,6 @@ const MonacoCell: React.FC<{
       editor.onDidBlurEditorWidget(() => {
         setFocused(false);
       });
-
-      editor.onDidMouse;
     }
   }
 
