@@ -133,7 +133,7 @@ const Notebook: React.FC<NotebookProps> = ({
 
     if (value === 'Markdown') {
       type = 'markdown';
-      newVal = '## New Markdown Cell\n Click inside to edit';
+      newVal = '## New Markdown Cell\n Double-click to toggle editing';
     }
 
     if (value === 'SPARQL') {
