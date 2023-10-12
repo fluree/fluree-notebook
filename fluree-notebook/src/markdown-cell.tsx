@@ -42,6 +42,7 @@ const MarkdownCell: React.FC<{
   const [cellAboveMenu, setCellAboveMenu] = useState(false);
   const monacoRef = useRef();
   const editorRef = useRef();
+  const actionRef = useRef();
 
   function setEditorTheme(editor: any, monaco: any) {
     monacoRef.current = monaco;
@@ -84,11 +85,16 @@ const MarkdownCell: React.FC<{
       editor.onDidBlurEditorWidget(() => {
         setFocused(false);
       });
+
+      editor.onKeyDown((e) => {
+        if (e.code === 'F9') {
+          actionRef.current.click();
+        }
+      });
     }
   }
 
   useEffect(() => {
-    console.log('id', id);
     let localState = JSON.parse(localStorage.getItem('notebookState'));
     let activeNotebookId = localState.activeNotebookId;
     let activeNotebook = localState.notebooks.find(
@@ -102,7 +108,7 @@ const MarkdownCell: React.FC<{
   }, [id]);
 
   useEffect(() => {
-    if (isEditing) {
+    if (isEditing && editorRef.current) {
       setStoredValue(value);
       setTimeout(() => {
         editorRef.current.focus();
@@ -115,7 +121,7 @@ const MarkdownCell: React.FC<{
   };
 
   const startEditing = () => {
-    // start editing ... test commit
+    // start editing
     let localState = JSON.parse(localStorage.getItem('notebookState'));
     let activeNotebookId = localState.activeNotebookId;
     let activeNotebookIndex = localState.notebooks.findIndex(
@@ -154,14 +160,34 @@ const MarkdownCell: React.FC<{
   return isEditing ? (
     <div className="mb-6">
       <div className="flex -ml-[10px] w-[calc(100%)] items-center justify-start pl-8">
+        <div className="absolute w-40 h-8 -mb-[1px] flex items-center z-[2]">
+          <div
+            className={`rounded-full h-[25px] w-[27px] relative transition-all delay-200 animate-pulse
+            ${focused || hover ? '' : 'hidden'}
+          ${focused ? 'bg-ui-main-300 dark:bg-ui-main-800 left-[14px]' : ''}
+          `}
+          ></div>
+        </div>
         <div
           id="monaco-toolbar"
-          className={`bg-ui-main-300 dark:bg-ui-neutral-700 ${
-            focused || hover ? 'opacity-100' : 'opacity-60'
-          } bg-opacity-60 px-3 py-[3px] rounded-t-md
-          backdrop-blur transition-opacity hover:opacity-100 flex gap-1 z-10`}
+          className={`bg-ui-main-300 dark:bg-ui-neutral-700 bg-opacity-20 dark:bg-opacity-20 px-3 py-[3px] rounded-t-md
+          backdrop-blur transition flex gap-1 z-10
+          ${
+            focused || hover
+              ? ''
+              : 'dark:text-ui-neutral-500 text-ui-neutral-600'
+          }`}
         >
-          <IconButton onClick={stopEditing} tooltip="Done Editing">
+          <IconButton
+            onClick={stopEditing}
+            tooltip="Done Editing"
+            actionRef={actionRef}
+            className={`transition ${
+              focused || hover
+                ? 'text-ui-main-600 dark:text-ui-main-300'
+                : 'text-ui-main-500 dark:text-ui-main-500'
+            }`}
+          >
             <Check />
           </IconButton>
           <IconButton onClick={cancelEditing} tooltip="Cancel Edit">

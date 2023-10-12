@@ -18,10 +18,8 @@ const CellListItem = ({
           window.dispatchEvent(new Event('storage'));
         }, 50);
         if (index === undefined) {
-          console.log('NO INDEX FOUND!');
           addCell(buttonText);
         } else {
-          console.log('there was an index...');
           addCell(buttonText, index);
         }
       }}

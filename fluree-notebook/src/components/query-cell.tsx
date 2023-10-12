@@ -29,6 +29,8 @@ export interface IQueryProps {}
 export const QueryCell = ({
   id,
   value,
+  result,
+  resultStatus,
   index,
   language,
   createCell,
@@ -40,6 +42,8 @@ export const QueryCell = ({
 }: {
   id: string;
   value: string;
+  result?: string;
+  resultStatus?: string;
   index: number;
   language: 'sparql' | 'json';
   createCell?: boolean;
@@ -50,7 +54,12 @@ export const QueryCell = ({
   onClick?: (element: React.MouseEvent<HTMLElement>) => void;
   onChange: (value: string) => void;
 }): JSX.Element => {
-  const [result, setResult] = useState<string | null>(null);
+  const [resultState, setResultState] = useState<string | null>(
+    result ? JSON.parse(result) : null
+  );
+  const [resultStatusState, setResultStatusState] = useState<
+    'success' | 'error' | null
+  >(null);
   const [focused, setFocused] = useState<boolean>(false);
   const [hover, setHover] = useState<boolean>(false);
   const [cellBelowMenu, setCellBelowMenu] = useState(false);
@@ -59,8 +68,10 @@ export const QueryCell = ({
     'query' | 'transact' | 'create' | null
   >(null);
   const monacoRef = useRef();
+  const resultRef = useRef();
   const editorRef = useRef();
   const actionRef = useRef();
+  const formatRef = useRef();
 
   axios.defaults.baseURL = 'http://localhost:58090/fluree';
 
@@ -102,6 +113,10 @@ export const QueryCell = ({
           '@context',
           'context',
           'depth',
+          'groupBy',
+          'orderBy',
+          'having',
+          'values',
         ];
         if (keys.every((e) => transactKeys.indexOf(e) > -1)) {
           setDefaultAction('transact');
@@ -112,16 +127,23 @@ export const QueryCell = ({
         } else {
           setDefaultAction(null);
         }
-        console.log('defaultAction: ' + defaultAction);
       } catch (e) {
         setDefaultAction(null);
       }
     }
   }, [value]);
 
-  const doDefaultAction = () => {
-    console.log(actionRef.current);
-    actionRef.current.click();
+  const doDefaultAction = (e) => {
+    console.log(e);
+    switch (e.code) {
+      case 'F9':
+        e.preventDefault();
+        actionRef.current.click();
+        break;
+      case 'F8':
+        e.preventDefault();
+        formatRef.current.click();
+    }
   };
 
   const flureePost = (endpoint: string) => {
@@ -136,17 +158,18 @@ export const QueryCell = ({
           withCredentials: false,
         })
         .then((d) => {
-          setResult(JSON.stringify(d.data, null, 2));
+          setResultStatusState('success');
+          setResultState(JSON.stringify(d.data, null, 2));
         })
         .catch((e) => {
+          setResultStatusState('error');
           let returnedValue = '';
           if (e.response.data.humanized) {
             returnedValue = e.response.data.humanized;
           } else {
             returnedValue = e.response.data;
           }
-          console.log(e.response.data);
-          setResult(JSON.stringify(returnedValue, null, 2));
+          setResultState(JSON.stringify(returnedValue, null, 2));
         });
     } else {
       axios
@@ -157,19 +180,49 @@ export const QueryCell = ({
           withCredentials: false,
         })
         .then((d) => {
-          setResult(JSON.stringify(d.data, null, 2));
+          setResultStatusState('success');
+          setResultState(JSON.stringify(d.data, null, 2));
         })
         .catch((e) => {
+          setResultStatusState('error');
+
           let returnedValue = '';
           if (e.response.data.humanized) {
             returnedValue = e.response.data.humanized;
           } else {
             returnedValue = e.response.data;
           }
-          console.log(e.response.data);
-          setResult(JSON.stringify(returnedValue, null, 2));
+          setResultState(JSON.stringify(returnedValue, null, 2));
         });
     }
+  };
+
+  useEffect(() => {
+    if (result) {
+      setResultState(JSON.parse(result));
+    }
+    if (resultStatus) {
+      setResultStatusState(resultStatus);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    updateStoredResult();
+  }, [resultState, resultStatusState]);
+
+  const updateStoredResult = () => {
+    let localState = JSON.parse(localStorage.getItem('notebookState'));
+    let activeNotebookId = localState.activeNotebookId;
+    let activeNotebookIndex = localState.notebooks.findIndex(
+      (obj) => obj.id === activeNotebookId
+    );
+    let activeNotebook = localState.notebooks.find(
+      (obj) => obj.id === activeNotebookId
+    );
+    activeNotebook.cells[index].result = JSON.stringify(resultState);
+    activeNotebook.cells[index].resultStatus = resultStatusState;
+    localState.notebooks[activeNotebookIndex] = activeNotebook;
+    localStorage.setItem('notebookState', JSON.stringify(localState));
   };
 
   const handleChange = (newValue: string | undefined, _event: any) => {
@@ -179,8 +232,6 @@ export const QueryCell = ({
   };
 
   const formatEditor = () => {
-    console.log(monacoRef.current);
-    console.log(editorRef.current);
     if (editorRef) {
       if (language === 'json') {
         editorRef.current['_actions']
@@ -250,6 +301,7 @@ export const QueryCell = ({
       'LIMIT',
       'OFFSET',
     ];
+
     breakKeywords.forEach((keyword) => {
       const regex = new RegExp(`\\b${keyword}\\b`, 'g');
       formattedQuery = formattedQuery.replace(regex, `\n${keyword}`);
@@ -262,25 +314,53 @@ export const QueryCell = ({
   return (
     <div className="mb-6">
       <div className="flex -ml-[10px] w-[calc(100%)] items-center justify-start pl-8">
-        <div className="absolute w-40 h-8 -mb-[1px] flex items-center z-[2]">
+        <div className="absolute w-60 h-8 -mb-[1px] flex items-center z-[2] overflow-hidden">
           <div
             className={`rounded-full h-[25px] w-[27px] relative animate-pulse
-          ${defaultAction === 'create' ? 'bg-ui-indigo-800 left-[86px]' : ''}
-          ${defaultAction === 'transact' ? 'bg-ui-yellow-800 left-[50px]' : ''}
-          ${defaultAction === 'query' ? 'bg-ui-main-800 left-[14px]' : ''}
+            ${focused || hover ? '' : 'hidden'}
+          ${
+            focused && defaultAction === 'create'
+              ? 'bg-ui-indigo-400 dark:bg-ui-indigo-800 left-[86px]'
+              : ''
+          }
+          ${
+            focused && defaultAction === 'transact'
+              ? 'bg-ui-yellow-200 dark:bg-ui-yellow-800 left-[50px]'
+              : ''
+          }
+          ${
+            focused && defaultAction === 'query'
+              ? 'bg-ui-main-300 dark:bg-ui-main-800 left-[14px]'
+              : ''
+          }
           `}
           ></div>
         </div>
         <div
           id="monaco-toolbar"
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
           className={`bg-ui-main-300 dark:bg-ui-neutral-700 bg-opacity-20 dark:bg-opacity-20 px-3 py-[3px] rounded-t-md
-          backdrop-blur transition-opacity flex gap-1 z-10`}
+          backdrop-blur transition flex gap-1 z-10 
+          ${
+            focused || hover
+              ? ''
+              : 'dark:text-ui-neutral-500 text-ui-neutral-600'
+          }`}
         >
           <IconButton
             actionRef={defaultAction === 'query' ? actionRef : null}
             onClick={() => flureePost('query')}
             tooltip="Query"
-            className={defaultAction === 'query' ? 'text-ui-main-300' : ''}
+            className={
+              defaultAction === 'query'
+                ? `transition ${
+                    focused || hover
+                      ? 'text-ui-main-600 dark:text-ui-main-300'
+                      : 'text-ui-main-500 dark:text-ui-main-500'
+                  }`
+                : ''
+            }
           >
             <Search />
           </IconButton>
@@ -291,7 +371,13 @@ export const QueryCell = ({
                 onClick={() => flureePost('transact')}
                 tooltip="Transact"
                 className={
-                  defaultAction === 'transact' ? 'text-ui-yellow-300' : ''
+                  defaultAction === 'transact'
+                    ? `transition ${
+                        focused || hover
+                          ? 'text-ui-yellow-400 dark:text-ui-yellow-300'
+                          : 'text-ui-yellow-300 dark:text-ui-yellow-500'
+                      }`
+                    : ''
                 }
               >
                 <Bolt />
@@ -301,7 +387,13 @@ export const QueryCell = ({
                 onClick={() => flureePost('create')}
                 tooltip="Create Ledger"
                 className={
-                  defaultAction === 'create' ? 'text-ui-indigo-300' : ''
+                  defaultAction === 'create'
+                    ? `transition ${
+                        focused || hover
+                          ? 'text-ui-indigo-700 dark:text-ui-indigo-400'
+                          : 'text-ui-indigo-500 dark:text-ui-indigo-500'
+                      }`
+                    : ''
                 }
               >
                 <Plus />
@@ -309,7 +401,11 @@ export const QueryCell = ({
             </>
           )}
           <span className="border-ui-main-900 dark:border-white border-l-[1px] opacity-20 mx-2 -mt-[2px] -mb-[2px]"></span>
-          <IconButton onClick={formatEditor} tooltip="Autoformat">
+          <IconButton
+            onClick={formatEditor}
+            tooltip="Autoformat"
+            actionRef={formatRef}
+          >
             <Sparkles />
           </IconButton>
           <CopyToClipboard text={value} onCopy={() => notify()}>
@@ -399,16 +495,20 @@ export const QueryCell = ({
         />
       </div>
 
-      {result && (
-        <div className="pt-2">
-          <div className="rounded-md border-solid border-ui-main-400 border relative overflow-hidden mr-[23px]">
+      {resultState && (
+        <div className={`pt-2 result-${resultStatusState}`}>
+          <div
+            className={`rounded-md border-solid ${
+              resultStatusState === 'error'
+                ? 'border-ui-red-400 dark:border-ui-red-300'
+                : 'border-ui-green-400 dark:border-ui-green-300'
+            } border relative overflow-hidden mr-[23px]`}
+          >
             <MonacoCell
-              value={result}
+              value={resultState}
               language="json"
-              setFocused={setFocused}
               setHover={setHover}
-              monacoRef={monacoRef}
-              editorRef={editorRef}
+              monacoRef={resultRef}
               readOnly={true}
             />
           </div>

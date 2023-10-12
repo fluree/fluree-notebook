@@ -56,7 +56,9 @@ const MonacoCell: React.FC<{
 
   function setEditorTheme(editor: any, monaco: any) {
     monacoRef.current = monaco;
-    editorRef.current = editor;
+    if (editorRef) {
+      editorRef.current = editor;
+    }
 
     monaco.editor.defineTheme('dark', {
       base: 'vs-dark',
@@ -89,7 +91,7 @@ const MonacoCell: React.FC<{
       monaco.editor.setTheme('default');
     }
 
-    if (editor) {
+    if (editor && !readOnly) {
       editor.onDidFocusEditorWidget(() => {
         setFocused(true);
       });
@@ -99,16 +101,11 @@ const MonacoCell: React.FC<{
       });
 
       editor.onKeyDown((e) => {
-        console.log("y'all onkey down now");
-        console.log(e);
-        if (e.code === 'F9') {
-          onKeyDown();
-        }
+        // e.persist();
+        e.preventDefault();
+        onKeyDown(e);
       });
     }
-
-    console.log(monacoRef.current);
-    console.log(editorRef.current);
   }
 
   return (

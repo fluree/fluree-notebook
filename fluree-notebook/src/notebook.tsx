@@ -7,6 +7,8 @@ interface CellProps {
   id: string;
   type: 'markdown' | 'monaco';
   value: string;
+  result?: string;
+  resultStatus?: string;
   index: number;
   createCell?: boolean;
   language?: 'json' | 'sparql';
@@ -132,8 +134,6 @@ const addCell = (value: 'Markdown' | 'SPARQL' | 'FLUREEQL', index?: number) => {
   let language: 'json' | 'sparql' = 'json';
   let type: 'monaco' | 'markdown' = 'monaco';
 
-  console.log('index given: ', index);
-
   switch (value) {
     case 'Markdown':
       type = 'markdown';
@@ -181,19 +181,14 @@ const addCell = (value: 'Markdown' | 'SPARQL' | 'FLUREEQL', index?: number) => {
   localState.notebooks[activeNotebookIndex] = activeNotebook;
   localStorage.setItem('notebookState', JSON.stringify(localState));
   window.dispatchEvent(new Event('storage'));
-
-  //   const newCells = [
-  //     ...storedCells,
-  //     { type, value: newVal, language: language },
-  //   ];
-  //   console.log('NEW CELLS: ', newCells);
-  //   onCellsChange(newCells);
 };
 
 const Cell: React.FC<CellProps> = ({
   id,
   type,
   value,
+  result,
+  resultStatus,
   index,
   onChange,
   createCell,
@@ -218,6 +213,8 @@ const Cell: React.FC<CellProps> = ({
         <QueryCell
           id={id}
           value={value}
+          result={result}
+          resultStatus={resultStatus}
           createCell={createCell ? createCell : undefined}
           duplicateCell={duplicateCell}
           moveCell={moveCell}
