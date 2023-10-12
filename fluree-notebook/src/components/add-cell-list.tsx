@@ -2,17 +2,28 @@ const CellListItem = ({
   buttonText,
   addCell,
   setShowList,
+  index,
 }: {
   buttonText: 'Markdown' | 'FLUREEQL' | 'SPARQL';
-  addCell: (value: 'Markdown' | 'FLUREEQL' | 'SPARQL') => void;
+  addCell: (value: 'Markdown' | 'FLUREEQL' | 'SPARQL', index?: number) => void;
   setShowList: (value: boolean) => void;
+  index?: number;
 }): JSX.Element => {
   return (
     <button
       className="hover:bg-ui-main-100 dark:hover:bg-ui-neutral-500 dark:text-white flex flex-col self-stretch"
       onClick={() => {
-        setShowList(false);
-        addCell(buttonText);
+        setTimeout(() => {
+          setShowList(false);
+          window.dispatchEvent(new Event('storage'));
+        }, 50);
+        if (index === undefined) {
+          console.log('NO INDEX FOUND!');
+          addCell(buttonText);
+        } else {
+          console.log('there was an index...');
+          addCell(buttonText, index);
+        }
       }}
       value={buttonText}
     >
@@ -35,13 +46,15 @@ const CellListItem = ({
 export const AddCellList = ({
   addCell,
   setShowList,
+  index,
 }: {
-  addCell: (value: 'Markdown' | 'FLUREEQL' | 'SPARQL') => void;
+  addCell: (value: 'Markdown' | 'FLUREEQL' | 'SPARQL', index?: number) => void;
   setShowList: (value: boolean) => void;
+  index?: number;
 }): JSX.Element => {
   return (
     <div
-      className="dark:bg-ui-neutral-600 rounded-lg flex flex-col gap-6 items-start justify-start w-[181px] relative"
+      className="dark:bg-ui-neutral-600 rounded-lg overflow-hidden flex flex-col gap-6 items-start justify-start w-[181px] z-20 relative"
       style={{
         boxShadow:
           'var(--shadow-md-box-shadow, 0px 2px 4px -2px rgba(0, 0, 0, 0.05), 0px 4px 6px -1px rgba(0, 0, 0, 0.10))',
@@ -52,16 +65,19 @@ export const AddCellList = ({
           buttonText="Markdown"
           addCell={addCell}
           setShowList={setShowList}
+          index={index}
         />
         <CellListItem
           buttonText="FLUREEQL"
           addCell={addCell}
           setShowList={setShowList}
+          index={index}
         />
         <CellListItem
           buttonText="SPARQL"
           addCell={addCell}
           setShowList={setShowList}
+          index={index}
         />
       </div>
     </div>

@@ -6,8 +6,10 @@ import { MainNav } from './components/main-nav.tsx';
 
 export const NotebookShell = (): JSX.Element => {
   const createJson = {
-    '@id': 'notebook1',
-    '@context': { f: 'https://ns.flur.ee/ledger#' },
+    'f:ledger': 'notebookExample',
+    '@context': {
+      f: 'https://ns.flur.ee/ledger#',
+    },
     'f:defaultContext': {
       id: '@id',
       type: '@type',
@@ -21,7 +23,11 @@ export const NotebookShell = (): JSX.Element => {
       f: 'https://ns.flur.ee/ledger#',
       ex: 'http://example.org/',
     },
-    '@graph': [{ message: 'ledger created' }],
+    '@graph': [
+      {
+        message: 'ledger created',
+      },
+    ],
   };
 
   const [state, setState] = useState<NotebookState>(() => {
@@ -80,6 +86,7 @@ export const NotebookShell = (): JSX.Element => {
           name,
           cells: [
             {
+              id: Math.random().toString(36).substring(7),
               value: JSON.stringify(createJson, null, 2),
               language: 'json',
               type: 'monaco',

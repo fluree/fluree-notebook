@@ -6,18 +6,22 @@ const MonacoCell: React.FC<{
   value: string;
   language: 'json' | 'sparql';
   changeCallback?: (value: string | undefined, event: any) => void;
+  onKeyDown: () => void;
   setFocused: (value: boolean) => void;
   setHover: (value: boolean) => void;
   monacoRef: any;
   editorRef: any;
+  readOnly: boolean;
 }> = ({
   value,
   language,
   changeCallback,
+  onKeyDown,
   setFocused,
   setHover,
   monacoRef,
   editorRef,
+  readOnly,
 }) => {
   const [height, setHeight] = useState(300);
 
@@ -53,6 +57,7 @@ const MonacoCell: React.FC<{
   function setEditorTheme(editor: any, monaco: any) {
     monacoRef.current = monaco;
     editorRef.current = editor;
+
     monaco.editor.defineTheme('dark', {
       base: 'vs-dark',
       inherit: true,
@@ -92,7 +97,18 @@ const MonacoCell: React.FC<{
       editor.onDidBlurEditorWidget(() => {
         setFocused(false);
       });
+
+      editor.onKeyDown((e) => {
+        console.log("y'all onkey down now");
+        console.log(e);
+        if (e.code === 'F9') {
+          onKeyDown();
+        }
+      });
     }
+
+    console.log(monacoRef.current);
+    console.log(editorRef.current);
   }
 
   return (
@@ -104,7 +120,9 @@ const MonacoCell: React.FC<{
       >
         <Editor
           language={language}
-          theme="default"
+          theme={
+            localStorage.getItem('theme') === 'dark' ? 'vs-dark' : 'default'
+          }
           options={{
             padding: { top: 10 },
             minimap: { enabled: false },
@@ -113,11 +131,11 @@ const MonacoCell: React.FC<{
             scrollbar: {
               alwaysConsumeMouseWheel: false,
             },
+            readOnly: readOnly,
           }}
           value={value}
           height={`${height}px`}
-          onChange={changeCallback ? changeCallback : undefined}
-          //   onChange={handleChange}
+          onChange={changeCallback ? changeCallback : handleChange}
           onMount={setEditorTheme}
         />
       </div>

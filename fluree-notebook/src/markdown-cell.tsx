@@ -4,6 +4,7 @@ import Editor from '@monaco-editor/react';
 import remarkGfm from 'remark-gfm';
 
 import IconButton from './components/buttons/icon-button';
+import { AddCellList } from './components/add-cell-list';
 
 import { Check } from './components/icons/check';
 import { Delete } from './components/icons/delete';
@@ -15,16 +16,30 @@ import { DocumentDown } from './components/icons/document-down';
 import { Cancel } from './components/icons/cancel';
 
 const MarkdownCell: React.FC<{
+  id: string;
   value: string;
-  onChange: (newValue: string) => void;
-  duplicateCell: (index: number) => void;
-  moveCell: (direction: string, index: number) => void;
   index: number;
-}> = ({ value, onChange, duplicateCell, moveCell, index }) => {
+  addCell: (value: 'Markdown' | 'SPARQL' | 'FLUREEQL', index?: number) => void;
+  moveCell: (direction: string, index: number) => void;
+  duplicateCell: (index: number) => void;
+  deleteCell: (index: number) => void;
+  onChange: (newValue: string) => void;
+}> = ({
+  id,
+  value,
+  index,
+  addCell,
+  moveCell,
+  duplicateCell,
+  deleteCell,
+  onChange,
+}) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [storedValue, setStoredValue] = useState<string>(value);
   const [focused, setFocused] = useState<boolean>(false);
   const [hover, setHover] = useState<boolean>(false);
+  const [cellBelowMenu, setCellBelowMenu] = useState(false);
+  const [cellAboveMenu, setCellAboveMenu] = useState(false);
   const monacoRef = useRef();
   const editorRef = useRef();
 
@@ -73,6 +88,7 @@ const MarkdownCell: React.FC<{
   }
 
   useEffect(() => {
+    console.log('id', id);
     let localState = JSON.parse(localStorage.getItem('notebookState'));
     let activeNotebookId = localState.activeNotebookId;
     let activeNotebook = localState.notebooks.find(
@@ -80,8 +96,10 @@ const MarkdownCell: React.FC<{
     );
     if (activeNotebook.cells[index]?.editing === true) {
       setIsEditing(true);
+    } else {
+      setIsEditing(false);
     }
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     if (isEditing) {
@@ -93,8 +111,6 @@ const MarkdownCell: React.FC<{
   }, [isEditing]);
 
   const handleEditorChange = (value) => {
-    console.log(editorRef.current);
-    console.log(monacoRef.current);
     onChange(value);
   };
 
@@ -130,10 +146,6 @@ const MarkdownCell: React.FC<{
     setIsEditing(false);
   };
 
-  const deleteCell = (deleteCell) => {
-    // delete cell
-  };
-
   const cancelEditing = () => {
     handleEditorChange(storedValue);
     stopEditing();
@@ -147,7 +159,7 @@ const MarkdownCell: React.FC<{
           className={`bg-ui-main-300 dark:bg-ui-neutral-700 ${
             focused || hover ? 'opacity-100' : 'opacity-60'
           } bg-opacity-60 px-3 py-[3px] rounded-t-md
-          backdrop-blur transition-opacity hover:opacity-100 flex gap-1`}
+          backdrop-blur transition-opacity hover:opacity-100 flex gap-1 z-10`}
         >
           <IconButton onClick={stopEditing} tooltip="Done Editing">
             <Check />
@@ -162,11 +174,43 @@ const MarkdownCell: React.FC<{
           >
             <Duplicate />
           </IconButton>
-          <IconButton tooltip="Create Cell Below">
-            <DocumentDown />
+          <IconButton
+            onClick={() => setCellAboveMenu(!cellAboveMenu)}
+            tooltip="Create Cell Above"
+          >
+            <>
+              <DocumentUp />
+              {cellAboveMenu && (
+                <div className="absolute z-30">
+                  <div className="absolute -left-1 -top-1">
+                    <AddCellList
+                      setShowList={setCellAboveMenu}
+                      addCell={addCell}
+                      index={index}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
           </IconButton>
-          <IconButton tooltip="Create Cell Above">
-            <DocumentUp />
+          <IconButton
+            onClick={() => setCellBelowMenu(!cellBelowMenu)}
+            tooltip="Create Cell Below"
+          >
+            <>
+              <DocumentDown />
+              {cellBelowMenu && (
+                <div className="absolute z-30">
+                  <div className="absolute -left-1 -top-1">
+                    <AddCellList
+                      setShowList={setCellBelowMenu}
+                      addCell={addCell}
+                      index={index + 1}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
           </IconButton>
           <span className="border-ui-main-900 dark:border-white border-l-[1px] opacity-20 mx-2 -my-[2px]"></span>
           <IconButton
@@ -181,7 +225,7 @@ const MarkdownCell: React.FC<{
           >
             <ArrowDown />
           </IconButton>
-          <IconButton onClick={deleteCell} tooltip="Delete Cell">
+          <IconButton onClick={() => deleteCell(index)} tooltip="Delete Cell">
             <Delete />
           </IconButton>
         </div>
@@ -197,7 +241,9 @@ const MarkdownCell: React.FC<{
         >
           <Editor
             language="markdown"
-            theme="default"
+            theme={
+              localStorage.getItem('theme') === 'dark' ? 'vs-dark' : 'default'
+            }
             options={{
               padding: { top: 10 },
               minimap: { enabled: false },
