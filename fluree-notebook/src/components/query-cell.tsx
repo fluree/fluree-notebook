@@ -23,6 +23,9 @@ import axios from 'axios';
 import { ArrowUp } from './icons/arrowUp';
 import { ArrowDown } from './icons/arrowDown';
 import { AddCellList } from './add-cell-list';
+import AddCellMenu from './add-cell-menu';
+import { Sparql } from './icons/sparql';
+import { Wave1 } from './icons/wave1';
 
 export interface IQueryProps {}
 
@@ -134,7 +137,6 @@ export const QueryCell = ({
   }, [value]);
 
   const doDefaultAction = (e) => {
-    console.log(e);
     switch (e.code) {
       case 'F9':
         e.preventDefault();
@@ -200,14 +202,20 @@ export const QueryCell = ({
   useEffect(() => {
     if (result) {
       setResultState(JSON.parse(result));
+    } else {
+      setResultState(null);
     }
     if (resultStatus) {
       setResultStatusState(resultStatus);
+    } else {
+      setResultStatusState(null);
     }
   }, [id]);
 
   useEffect(() => {
-    updateStoredResult();
+    if (resultState && resultStatusState) {
+      updateStoredResult();
+    }
   }, [resultState, resultStatusState]);
 
   const updateStoredResult = () => {
@@ -223,6 +231,7 @@ export const QueryCell = ({
     activeNotebook.cells[index].resultStatus = resultStatusState;
     localState.notebooks[activeNotebookIndex] = activeNotebook;
     localStorage.setItem('notebookState', JSON.stringify(localState));
+    window.dispatchEvent(new Event('storage'));
   };
 
   const handleChange = (newValue: string | undefined, _event: any) => {
@@ -312,7 +321,7 @@ export const QueryCell = ({
   }
 
   return (
-    <div className="mb-6">
+    <div className="mb-6" id={id}>
       <div className="flex -ml-[10px] w-[calc(100%)] items-center justify-start pl-8">
         <div className="absolute w-60 h-8 -mb-[1px] flex items-center z-[2] overflow-hidden">
           <div
@@ -351,7 +360,9 @@ export const QueryCell = ({
           <IconButton
             actionRef={defaultAction === 'query' ? actionRef : null}
             onClick={() => flureePost('query')}
-            tooltip="Query"
+            tooltip={
+              defaultAction === 'query' && focused ? 'Query [F9]' : 'Query'
+            }
             className={
               defaultAction === 'query'
                 ? `transition ${
@@ -364,12 +375,17 @@ export const QueryCell = ({
           >
             <Search />
           </IconButton>
+
           {language !== 'sparql' && (
             <>
               <IconButton
                 actionRef={defaultAction === 'transact' ? actionRef : null}
                 onClick={() => flureePost('transact')}
-                tooltip="Transact"
+                tooltip={
+                  defaultAction === 'transact' && focused
+                    ? 'Transact [F9]'
+                    : 'Transact'
+                }
                 className={
                   defaultAction === 'transact'
                     ? `transition ${
@@ -382,10 +398,15 @@ export const QueryCell = ({
               >
                 <Bolt />
               </IconButton>
+
               <IconButton
                 actionRef={defaultAction === 'create' ? actionRef : null}
                 onClick={() => flureePost('create')}
-                tooltip="Create Ledger"
+                tooltip={
+                  defaultAction === 'create' && focused
+                    ? 'Create Ledger [F9]'
+                    : 'Create Ledger'
+                }
                 className={
                   defaultAction === 'create'
                     ? `transition ${
@@ -400,80 +421,67 @@ export const QueryCell = ({
               </IconButton>
             </>
           )}
+
           <span className="border-ui-main-900 dark:border-white border-l-[1px] opacity-20 mx-2 -mt-[2px] -mb-[2px]"></span>
+
           <IconButton
             onClick={formatEditor}
-            tooltip="Autoformat"
+            tooltip={focused ? 'Autoformat [F8]' : 'Autoformat'}
             actionRef={formatRef}
           >
             <Sparkles />
           </IconButton>
+
           <CopyToClipboard text={value} onCopy={() => notify()}>
             <IconButton tooltip="Copy Contents">
               <Clipboard />
             </IconButton>
           </CopyToClipboard>
+
           {/* <IconButton tooltip="Move Cell (Drag)">
             <Handle />
           </IconButton> */}
+
           <span className="border-ui-main-900 dark:border-white border-l-[1px] opacity-20 mx-2 -mt-[2px] -mb-[2px]"></span>
+
           <IconButton
             onClick={() => duplicateCell(index)}
             tooltip="Duplicate Cell"
           >
             <Duplicate />
           </IconButton>
-          <IconButton
-            onClick={() => setCellAboveMenu(!cellAboveMenu)}
-            tooltip="Create Cell Above"
-          >
-            <>
+
+          <AddCellMenu addCell={addCell} index={index}>
+            <IconButton
+              onClick={() => setCellAboveMenu(!cellAboveMenu)}
+              tooltip="Create Cell Above"
+            >
               <DocumentUp />
-              {cellAboveMenu && (
-                <div className="absolute">
-                  <div className="absolute -left-1 -top-1">
-                    <AddCellList
-                      setShowList={setCellAboveMenu}
-                      addCell={addCell}
-                      index={index}
-                    />
-                  </div>
-                </div>
-              )}
-            </>
-          </IconButton>
-          <IconButton
-            onClick={() => setCellBelowMenu(!cellBelowMenu)}
-            tooltip="Create Cell Below"
-          >
-            <>
+            </IconButton>
+          </AddCellMenu>
+
+          <AddCellMenu addCell={addCell} index={index + 1}>
+            <IconButton tooltip="Create Cell Below">
               <DocumentDown />
-              {cellBelowMenu && (
-                <div className="absolute z-30">
-                  <div className="absolute -left-1 -top-1">
-                    <AddCellList
-                      setShowList={setCellBelowMenu}
-                      addCell={addCell}
-                      index={index + 1}
-                    />
-                  </div>
-                </div>
-              )}
-            </>
-          </IconButton>
+            </IconButton>
+          </AddCellMenu>
+
           <span className="border-ui-main-900 dark:border-white border-l-[1px] opacity-20 mx-2 -mt-[2px] -mb-[2px]"></span>
+
           <IconButton
             onClick={() => moveCell('up', index)}
             tooltip="Move Cell Up"
           >
             <ArrowUp />
           </IconButton>
+
           <IconButton
             onClick={() => moveCell('down', index)}
             tooltip="Move Cell Down"
           >
             <ArrowDown />
           </IconButton>
+
           <IconButton onClick={() => deleteCell(index)} tooltip="Delete Cell">
             <Delete />
           </IconButton>

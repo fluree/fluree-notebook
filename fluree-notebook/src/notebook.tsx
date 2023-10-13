@@ -39,7 +39,15 @@ const duplicateCell = (index: number) => {
   const newCell = JSON.parse(JSON.stringify(activeNotebookCells[index]));
   newCell.id = Math.random().toString(36).substring(7);
 
-  activeNotebookCells.splice(index, 0, newCell);
+  if (newCell.result) {
+    delete newCell.result;
+  }
+
+  if (newCell.resultStatus) {
+    delete newCell.resultStatus;
+  }
+
+  activeNotebookCells.splice(index + 1, 0, newCell);
 
   // set cells of active notebook
   activeNotebook.cells = activeNotebookCells;
@@ -151,6 +159,10 @@ const addCell = (value: 'Markdown' | 'SPARQL' | 'FLUREEQL', index?: number) => {
   const id = Math.random().toString(36).substring(7); // generate a unique id
   let newCell = { id, type, value: newVal, language };
 
+  if (value === 'Markdown') {
+    newCell.editing = true;
+  }
+
   // get local storage
   let localState = JSON.parse(localStorage.getItem('notebookState'));
 
@@ -181,6 +193,18 @@ const addCell = (value: 'Markdown' | 'SPARQL' | 'FLUREEQL', index?: number) => {
   localState.notebooks[activeNotebookIndex] = activeNotebook;
   localStorage.setItem('notebookState', JSON.stringify(localState));
   window.dispatchEvent(new Event('storage'));
+  if (index === undefined) {
+    document.documentElement.style.scrollBehavior = 'smooth';
+    setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView();
+    }, 400);
+    setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView();
+    }, 700);
+    setTimeout(() => {
+      document.documentElement.style.scrollBehavior = 'auto';
+    }, 700);
+  }
 };
 
 const Cell: React.FC<CellProps> = ({

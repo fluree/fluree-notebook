@@ -112,8 +112,60 @@ export const NotebookShell = (): JSX.Element => {
     });
   };
 
+  const addNotebook = (data) => {
+    // get local storage
+    let localState = JSON.parse(localStorage.getItem('notebookState'));
+
+    let newData = JSON.parse(data);
+
+    // if ID already exists...
+    let existingNotebook = localState.notebooks.findIndex(
+      (obj) => obj.id === newData.id
+    );
+
+    if (existingNotebook > -1) {
+      if (confirm(`Replace existing notebook? (id: ${newData.id})`) === true) {
+        // replace existing...
+        localState.notebooks.splice(existingNotebook, 1, newData);
+        localState.activeNotebookId = newData.id;
+      } else {
+        // assign new id
+        newData.id = Math.random().toString(36).substring(7);
+        localState.notebooks.push(newData);
+        localState.activeNotebookId = newData.id;
+      }
+    } else {
+      localState.notebooks.push(newData);
+      localState.activeNotebookId = newData.id;
+    }
+    localStorage.setItem('notebookState', JSON.stringify(localState));
+    setTimeout(() => {
+      window.dispatchEvent(new Event('storage'));
+    }, 500);
+  };
+
+  const allowDrop = (e) => {
+    e.preventDefault();
+  };
+
+  const drop = (e) => {
+    e.preventDefault();
+
+    var file = e.dataTransfer.files[0],
+      reader = new FileReader();
+
+    reader.onload = function (event) {
+      addNotebook(event.target.result);
+    };
+    reader.readAsText(file);
+  };
+
   return (
-    <div className="dark:bg-ui-neutral-900">
+    <div
+      className="dark:bg-ui-neutral-900 relative"
+      onDragOver={allowDrop}
+      onDrop={drop}
+    >
       <MainNav />
       <div className="flex">
         <Sidebar

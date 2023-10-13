@@ -19,3 +19,11 @@ html.dark {
     height: 20px;
     pointer-events: none;
 }
+
+.Toastify > div > div {
+    top: 18px;
+}
+
+.tippy-popper[aria-hidden="true"] {
+    display: none;
+}

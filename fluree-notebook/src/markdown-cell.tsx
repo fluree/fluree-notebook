@@ -14,6 +14,7 @@ import { Duplicate } from './components/icons/duplicate';
 import { DocumentUp } from './components/icons/document-up';
 import { DocumentDown } from './components/icons/document-down';
 import { Cancel } from './components/icons/cancel';
+import AddCellMenu from './components/add-cell-menu';
 
 const MarkdownCell: React.FC<{
   id: string;
@@ -100,21 +101,12 @@ const MarkdownCell: React.FC<{
     let activeNotebook = localState.notebooks.find(
       (obj) => obj.id === activeNotebookId
     );
-    if (activeNotebook.cells[index]?.editing === true) {
+    if (activeNotebook?.cells[index]?.editing === true) {
       setIsEditing(true);
     } else {
       setIsEditing(false);
     }
   }, [id]);
-
-  useEffect(() => {
-    if (isEditing && editorRef.current) {
-      setStoredValue(value);
-      setTimeout(() => {
-        editorRef.current.focus();
-      }, 200);
-    }
-  }, [isEditing]);
 
   const handleEditorChange = (value) => {
     onChange(value);
@@ -134,6 +126,12 @@ const MarkdownCell: React.FC<{
     localState.notebooks[activeNotebookIndex] = activeNotebook;
     localStorage.setItem('notebookState', JSON.stringify(localState));
     setIsEditing(true);
+    setTimeout(() => {
+      if (editorRef.current) {
+        setStoredValue(value);
+        editorRef.current.focus();
+      }
+    }, 200);
   };
 
   const stopEditing = () => {
@@ -158,7 +156,7 @@ const MarkdownCell: React.FC<{
   };
 
   return isEditing ? (
-    <div className="mb-6">
+    <div id={id} className="mb-6">
       <div className="flex -ml-[10px] w-[calc(100%)] items-center justify-start pl-8">
         <div className="absolute w-40 h-8 -mb-[1px] flex items-center z-[2]">
           <div
@@ -190,54 +188,35 @@ const MarkdownCell: React.FC<{
           >
             <Check />
           </IconButton>
+
           <IconButton onClick={cancelEditing} tooltip="Cancel Edit">
             <Cancel />
           </IconButton>
+
           <span className="border-ui-main-900 dark:border-white border-l-[1px] opacity-20 mx-2 -my-[2px]"></span>
+
           <IconButton
             onClick={() => duplicateCell(index)}
             tooltip="Duplicate Cell"
           >
             <Duplicate />
           </IconButton>
-          <IconButton
-            onClick={() => setCellAboveMenu(!cellAboveMenu)}
-            tooltip="Create Cell Above"
-          >
-            <>
+
+          <AddCellMenu addCell={addCell} index={index}>
+            <IconButton
+              onClick={() => setCellAboveMenu(!cellAboveMenu)}
+              tooltip="Create Cell Above"
+            >
               <DocumentUp />
-              {cellAboveMenu && (
-                <div className="absolute z-30">
-                  <div className="absolute -left-1 -top-1">
-                    <AddCellList
-                      setShowList={setCellAboveMenu}
-                      addCell={addCell}
-                      index={index}
-                    />
-                  </div>
-                </div>
-              )}
-            </>
-          </IconButton>
-          <IconButton
-            onClick={() => setCellBelowMenu(!cellBelowMenu)}
-            tooltip="Create Cell Below"
-          >
-            <>
+            </IconButton>
+          </AddCellMenu>
+
+          <AddCellMenu addCell={addCell} index={index + 1}>
+            <IconButton tooltip="Create Cell Below">
               <DocumentDown />
-              {cellBelowMenu && (
-                <div className="absolute z-30">
-                  <div className="absolute -left-1 -top-1">
-                    <AddCellList
-                      setShowList={setCellBelowMenu}
-                      addCell={addCell}
-                      index={index + 1}
-                    />
-                  </div>
-                </div>
-              )}
-            </>
-          </IconButton>
+            </IconButton>
+          </AddCellMenu>
+
           <span className="border-ui-main-900 dark:border-white border-l-[1px] opacity-20 mx-2 -my-[2px]"></span>
           <IconButton
             onClick={() => moveCell('up', index)}
@@ -298,6 +277,7 @@ const MarkdownCell: React.FC<{
     </div>
   ) : (
     <div
+      id={id}
       className="flex flex-row rounded-md mr-6 mb-6"
       onDoubleClick={startEditing}
     >

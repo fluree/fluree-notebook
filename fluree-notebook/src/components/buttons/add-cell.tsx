@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { AddCellList } from '../add-cell-list';
+import AddCellMenu from '../add-cell-menu';
+import { Plus } from '../icons/plus';
 
 export const Line = (): JSX.Element => {
   return (
@@ -56,32 +58,17 @@ export const AddCell = ({
 }: {
   addCell: (value: 'Markdown' | 'FLUREEQL' | 'SPARQL') => void;
 }): JSX.Element => {
-  const [showList, setShowList] = useState(false);
   return (
-    <div className="flex flex-col dark:text-white">
+    <div className=" justify-start items-start flex flex-col-reverse dark:text-white">
       <Line />
-      <button onClick={() => setShowList(!showList)}>
-        <div className="bg-ui-main-100 dark:bg-ui-neutral-700 rounded-lg p-3 flex flex-col gap-0 items-start justify-start w-[180px] relative">
-          <div className="flex flex-row gap-0 items-center justify-start self-stretch shrink-0 relative">
-            <div
-              className="text-ui-main-900 dark:text-white text-left relative flex-1 flex items-center justify-start"
-              style={{
-                font: "var(--leading-tight-text-sm-font-normal, 400 14px/125% 'Inter', sans-serif)",
-              }}
-            >
-              Add Cell
-            </div>
-            <span className="dark:text-white">
-              <Chevron down={!showList} />
-            </span>
-          </div>
+      <AddCellMenu addCell={addCell} position="above">
+        <div className="bg-ui-main-100 hover:bg-ui-main-200 flex dark:bg-ui-neutral-700 dark:hover:bg-ui-neutral-600 transition rounded-lg p-3 gap-0 items-start justify-between w-[180px] relative">
+          Add Cell
+          <span className="dark:text-white">
+            <Plus />
+          </span>
         </div>
-      </button>
-      <div>
-        {showList && (
-          <AddCellList addCell={addCell} setShowList={setShowList} />
-        )}
-      </div>
+      </AddCellMenu>
     </div>
   );
 };

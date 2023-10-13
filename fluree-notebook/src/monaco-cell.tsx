@@ -101,8 +101,6 @@ const MonacoCell: React.FC<{
       });
 
       editor.onKeyDown((e) => {
-        // e.persist();
-        e.preventDefault();
         onKeyDown(e);
       });
     }

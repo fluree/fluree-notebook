@@ -5,11 +5,13 @@ import {
   ArrowRightCircleIcon,
   ChevronDownIcon,
   DocumentDuplicateIcon,
+  CodeBracketIcon,
   HeartIcon,
   PencilSquareIcon,
   TrashIcon,
   UserPlusIcon,
 } from '@heroicons/react/20/solid';
+
 import { DotsVerticalSolid } from './icons/dots-vertical';
 
 function classNames(...classes) {
@@ -69,6 +71,42 @@ const SidebarMenu = ({ id, setEditing, inputRef }) => {
     window.dispatchEvent(new Event('storage'));
   };
 
+  const exportJSON = () => {
+    let localState = JSON.parse(localStorage.getItem('notebookState'));
+
+    // get notebook by id
+    let thisNotebook = localState.notebooks.find((obj) => obj.id === id);
+    let notebookCells = thisNotebook.cells;
+
+    for (var i = 0; i < notebookCells.length; i++) {
+      delete notebookCells[i].result;
+      delete notebookCells[i].resultStatus;
+    }
+
+    thisNotebook.cells = notebookCells;
+
+    let filename = `${thisNotebook.name}.json`;
+    let data = JSON.stringify(thisNotebook, null, 2);
+    let file = new Blob([data], { type: 'json' });
+
+    if (window.navigator.msSaveOrOpenBlob)
+      // IE10+
+      window.navigator.msSaveOrOpenBlob(file, filename);
+    else {
+      // Others
+      var a = document.createElement('a'),
+        url = URL.createObjectURL(file);
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }, 0);
+    }
+  };
+
   return (
     <Menu
       as="div"
@@ -120,6 +158,23 @@ const SidebarMenu = ({ id, setEditing, inputRef }) => {
                     aria-hidden="true"
                   />
                   Duplicate
+                </span>
+              )}
+            </Menu.Item>
+            <Menu.Item>
+              {({ active }) => (
+                <span
+                  onClick={exportJSON}
+                  className={classNames(
+                    active ? activeClasses : classes,
+                    'group flex items-center px-4 py-2 text-sm'
+                  )}
+                >
+                  <CodeBracketIcon
+                    className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
+                    aria-hidden="true"
+                  />
+                  Export JSON
                 </span>
               )}
             </Menu.Item>
