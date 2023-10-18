@@ -81,6 +81,7 @@ const SidebarMenu = ({ id, setEditing, inputRef }) => {
     for (var i = 0; i < notebookCells.length; i++) {
       delete notebookCells[i].result;
       delete notebookCells[i].resultStatus;
+      delete notebookCells[i].revert;
     }
 
     thisNotebook.cells = notebookCells;

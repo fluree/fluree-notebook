@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import useGlobal from '../../hooks/useGlobal.jsx';
+import useGlobal from '../../hooks/useGlobal';
 import { Moon } from '../icons/moon';
 import { Sun } from '../icons/sun';
+import IconButton from './icon-button.js';
 
 export const ThemeToggle = (): JSX.Element => {
   const [theme, setTheme] = useState(localStorage.getItem('theme'));
@@ -31,12 +32,15 @@ export const ThemeToggle = (): JSX.Element => {
   };
 
   return (
-    <div
+    <IconButton
       onClick={toggleTheme}
       className="p-2 cursor-pointer text-[#13C6FF] rounded-full hover:bg-[rgba(0,0,0,0.1)]"
+      size="lg"
     >
-      {theme === 'dark' && <Moon />}
-      {theme === 'light' && <Sun />}
-    </div>
+      <>
+        {theme === 'dark' && <Moon />}
+        {theme === 'light' && <Sun />}
+      </>
+    </IconButton>
   );
 };

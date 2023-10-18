@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AddCellList } from '../add-cell-list';
 import AddCellMenu from '../add-cell-menu';
 import { Plus } from '../icons/plus';
+import { CheckCircleIcon } from '@heroicons/react/20/solid';
 
 export const Line = (): JSX.Element => {
   return (
@@ -55,19 +56,34 @@ export const Chevron = ({ down }: { down: boolean }): JSX.Element => {
 
 export const AddCell = ({
   addCell,
+  conn,
+  defaultLedger,
 }: {
   addCell: (value: 'Markdown' | 'FLUREEQL' | 'SPARQL') => void;
+  conn: string;
+  defaultLedger?: string;
 }): JSX.Element => {
   return (
     <div className=" justify-start items-start flex flex-col-reverse dark:text-white">
       <Line />
-      <AddCellMenu addCell={addCell} position="above">
-        <div className="bg-ui-main-100 hover:bg-ui-main-200 flex dark:bg-ui-neutral-700 dark:hover:bg-ui-neutral-600 transition rounded-lg p-3 gap-0 items-start justify-between w-[180px] relative">
-          Add Cell
-          <span className="dark:text-white">
-            <Plus />
-          </span>
-        </div>
+      <AddCellMenu
+        addCell={addCell}
+        position="above"
+        defaultLedger={defaultLedger}
+        conn={conn}
+      >
+        <>
+          <div
+            className={`inline-flex items-center gap-x-2 rounded-md bg-ui-main-300 dark:bg-ui-main-800 px-3.5 py-2.5 text-sm 
+            font-sans font-semibold dark:text-white text-gray-600 shadow-sm dark:hover:bg-ui-main-700 hover:bg-ui-main-400 focus-visible:outline 
+            focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600
+            transition
+            `}
+          >
+            Add Cell
+            <Plus className="-mr-0.5 h-5 w-5" aria-hidden="true" />
+          </div>
+        </>
       </AddCellMenu>
     </div>
   );

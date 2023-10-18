@@ -2,12 +2,15 @@ import React, { createContext, useContext, useReducer } from 'react';
 
 const initialState = {
   theme: localStorage.getItem('theme'),
-  input: [],
-  open: false,
-  toolbarVisible: true,
-  localStorageListener: false,
-  flureeEditorKey: 'editorValues',
-  responseEditorKey: 'responseValues',
+  //   input: [],
+  //   open: false,
+  //   settingsOpen: true,
+  settingsOpen: false,
+  defaultConn:
+    localStorage.getItem('defaultConn') ??
+    '{"name":"localhost","url":"http://localhost:58090/fluree","type":"instance"}',
+  //   toolbarVisible: true,
+  //   localStorageListener: false,
 };
 
 const GlobalContext = createContext();

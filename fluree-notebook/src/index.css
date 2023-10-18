@@ -20,6 +20,12 @@ html.dark {
     pointer-events: none;
 }
 
+.icon-button-lg svg {
+    width: 27px;
+    height: 27px;
+    pointer-events: none;
+}
+
 .Toastify > div > div {
     top: 18px;
 }

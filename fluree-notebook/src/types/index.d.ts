@@ -7,13 +7,13 @@ interface Cell {
 interface NotebookProps {
   id: string;
   storedCells: Cell[];
-  onCellsChange: (cells:Cell[]) => void;
-
+  defaultConn?: string;
+  onCellsChange: (cells: Cell[]) => void;
 }
 
 type NotebookState = {
   notebooks: Notebook[];
   activeNotebookId: string | null;
-}
+};
 
-export type { Cell, NotebookProps, NotebookState }
+export type { Cell, NotebookProps, NotebookState };

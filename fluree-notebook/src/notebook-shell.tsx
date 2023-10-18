@@ -3,6 +3,7 @@ import { Sidebar } from './components/sidebar.tsx';
 import Notebook from './notebook.tsx';
 import type { NotebookState, Cell } from './types/index';
 import { MainNav } from './components/main-nav.tsx';
+import useGlobal from './hooks/useGlobal.tsx';
 
 export const NotebookShell = (): JSX.Element => {
   const createJson = {
@@ -30,6 +31,10 @@ export const NotebookShell = (): JSX.Element => {
     ],
   };
 
+  const {
+    state: { defaultConn },
+  } = useGlobal();
+
   const [state, setState] = useState<NotebookState>(() => {
     //TODO add results with the cells
     const localState = localStorage.getItem('notebookState');
@@ -49,6 +54,24 @@ export const NotebookShell = (): JSX.Element => {
   };
 
   useEffect(() => {
+    if (!localStorage.getItem('instances')) {
+      localStorage.setItem(
+        'instances',
+        '[{"name":"localhost","url":"http://localhost:58090/fluree","type":"instance"}]'
+      );
+    }
+
+    if (!localStorage.getItem('datasets')) {
+      localStorage.setItem('datasets', '[]');
+    }
+
+    if (!localStorage.getItem('defaultConn')) {
+      localStorage.setItem(
+        'defaultConn',
+        '{"name":"localhost","url":"http://localhost:58090/fluree","type":"instance"}'
+      );
+    }
+
     window.addEventListener('storage', getLocalStorage);
     return () => {
       window.removeEventListener('storage', getLocalStorage);
@@ -62,20 +85,17 @@ export const NotebookShell = (): JSX.Element => {
 
   const addNewNotebook = () => {
     const id = Math.random().toString(36).substring(7); // generate a unique id
-    let existingTabs = localStorage.getItem('notebookState');
-    existingTabs = JSON.parse(existingTabs);
-    existingTabs = existingTabs.notebooks;
+    let localState = JSON.parse(localStorage.getItem('notebookState'));
+    let notebooks = localState.notebooks;
 
-    let tabNames = existingTabs.map((tab) => tab.name);
-    let newName = '';
-    for (var i = 1; i <= tabNames.length + 1; i++) {
-      if (tabNames.indexOf(`notebook${i}`) === -1) {
-        newName = `notebook${i}`;
+    let names = notebooks.map((notebook) => notebook.name);
+    let name = '';
+    for (var i = 1; i <= names.length + 1; i++) {
+      if (names.indexOf(`notebook${i}`) === -1) {
+        name = `notebook${i}`;
         break;
       }
     }
-
-    let name = newName;
 
     setState((prevState) => ({
       ...prevState,
@@ -84,6 +104,7 @@ export const NotebookShell = (): JSX.Element => {
         {
           id,
           name,
+          defaultConn,
           cells: [
             {
               id: Math.random().toString(36).substring(7),
@@ -182,6 +203,10 @@ export const NotebookShell = (): JSX.Element => {
               storedCells={
                 state.notebooks.find((n) => n.id === state.activeNotebookId)
                   ?.cells
+              }
+              defaultConn={
+                state.notebooks.find((n) => n.id === state.activeNotebookId)
+                  ?.defaultConn
               }
               onCellsChange={(cells: Cell[]) =>
                 editNotebook(state.activeNotebookId as string, cells)

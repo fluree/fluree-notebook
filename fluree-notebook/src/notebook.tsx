@@ -10,12 +10,15 @@ interface CellProps {
   result?: string;
   resultStatus?: string;
   index: number;
+  revert?: string;
+  defaultConn?: string;
   createCell?: boolean;
   language?: 'json' | 'sparql';
   addCell: (value: 'Markdown' | 'SPARQL' | 'FLUREEQL', index?: number) => void;
   moveCell: (direction: string, index: number) => void;
   duplicateCell: (index: number) => void;
   deleteCell: (index: number) => void;
+  clearResult: (index: number) => void;
   onChange: (value: string) => void;
   onDelete: () => void;
 }
@@ -121,26 +124,60 @@ const deleteCell = (index: number) => {
   window.dispatchEvent(new Event('storage'));
 };
 
+const clearResult = (index: number) => {
+  // get local storage
+  let localState = JSON.parse(localStorage.getItem('notebookState'));
+
+  // get active notebook, index
+  let activeNotebookId = localState.activeNotebookId;
+  let activeNotebookIndex = localState.notebooks.findIndex(
+    (obj) => obj.id === activeNotebookId
+  );
+  let activeNotebook = localState.notebooks.find(
+    (obj) => obj.id === activeNotebookId
+  );
+
+  // cells of active notebook; remove cell
+  // activeNotebookCells.splice(index, 1);
+  delete activeNotebook.cells[index].result;
+  delete activeNotebook.cells[index].resultStatus;
+
+  // move changed item back into main object; set local storage
+  localState.notebooks[activeNotebookIndex] = activeNotebook;
+  localStorage.setItem('notebookState', JSON.stringify(localState));
+  window.dispatchEvent(new Event('storage'));
+};
+
 const defaultMarkdown = '## New Markdown Cell\n Double-click to toggle editing';
-const defaultSPARQL = `SELECT ?s 
-FROM <notebook1>
+const defaultSPARQL = (defaultLedger: string) =>
+  `SELECT ?s 
+  FROM <${defaultLedger ?? 'notebook1'}>
 WHERE {
   ?s <type> rdfs:Class
 }`;
-const defaultFlureeQL = JSON.stringify(
-  {
-    from: 'notebook1',
-    select: '?s',
-    where: [['?s', 'rdf:type', 'rdfs:Class']],
-  },
-  null,
-  2
-);
 
-const addCell = (value: 'Markdown' | 'SPARQL' | 'FLUREEQL', index?: number) => {
+const defaultFlureeQL = (defaultLedger: string) =>
+  JSON.stringify(
+    {
+      from: defaultLedger ?? 'notebook1',
+      select: '?s',
+      where: [['?s', 'rdf:type', 'rdfs:Class']],
+    },
+    null,
+    2
+  );
+
+const addCell = (
+  value: 'Markdown' | 'SPARQL' | 'FLUREEQL',
+  conn: string,
+  defaultLedger?: string,
+  index?: number
+) => {
   let newVal: string = '';
   let language: 'json' | 'sparql' = 'json';
   let type: 'monaco' | 'markdown' = 'monaco';
+
+  console.log('default ledger is... ', defaultLedger);
 
   switch (value) {
     case 'Markdown':
@@ -149,18 +186,19 @@ const addCell = (value: 'Markdown' | 'SPARQL' | 'FLUREEQL', index?: number) => {
       break;
     case 'SPARQL':
       language = 'sparql';
-      newVal = defaultSPARQL;
+      newVal = defaultSPARQL(defaultLedger);
       break;
     case 'FLUREEQL':
-      newVal = defaultFlureeQL;
+      newVal = defaultFlureeQL(defaultLedger);
       break;
   }
 
   const id = Math.random().toString(36).substring(7); // generate a unique id
-  let newCell = { id, type, value: newVal, language };
+  let newCell = { id, type, conn, value: newVal, language };
 
   if (value === 'Markdown') {
     newCell.editing = true;
+    delete newCell.conn;
   }
 
   // get local storage
@@ -213,10 +251,13 @@ const Cell: React.FC<CellProps> = ({
   value,
   result,
   resultStatus,
+  revert,
   index,
-  onChange,
+  defaultConn,
+  conn,
   createCell,
   language = 'json',
+  onChange,
   onDelete,
 }) => {
   return (
@@ -226,10 +267,11 @@ const Cell: React.FC<CellProps> = ({
           id={id}
           index={index}
           value={value}
-          duplicateCell={duplicateCell}
-          moveCell={moveCell}
-          deleteCell={deleteCell}
           addCell={addCell}
+          defaultConn={defaultConn}
+          moveCell={moveCell}
+          duplicateCell={duplicateCell}
+          deleteCell={deleteCell}
           onChange={onChange}
         />
       )}
@@ -238,12 +280,16 @@ const Cell: React.FC<CellProps> = ({
           id={id}
           value={value}
           result={result}
+          revert={revert}
           resultStatus={resultStatus}
+          defaultConn={defaultConn}
+          conn={conn}
           createCell={createCell ? createCell : undefined}
-          duplicateCell={duplicateCell}
-          moveCell={moveCell}
-          deleteCell={deleteCell}
           addCell={addCell}
+          moveCell={moveCell}
+          duplicateCell={duplicateCell}
+          deleteCell={deleteCell}
+          clearResult={clearResult}
           language={language}
           onChange={onChange}
           index={index}
@@ -256,9 +302,30 @@ const Cell: React.FC<CellProps> = ({
 const Notebook: React.FC<NotebookProps> = ({
   id,
   storedCells,
+  defaultConn,
   onCellsChange,
 }) => {
   console.log('STORED CELLS: ', storedCells);
+
+  const getDefaultLedger = () => {
+    // get local storage
+    let localState = JSON.parse(localStorage.getItem('notebookState'));
+
+    // get active notebook, index
+    let activeNotebookId = localState.activeNotebookId;
+    let activeNotebook = localState.notebooks.find(
+      (obj) => obj.id === activeNotebookId
+    );
+
+    let nbConn = JSON.parse(defaultConn);
+
+    if (activeNotebook?.connCache) {
+      if (activeNotebook.connCache[nbConn.id]) {
+        return activeNotebook.connCache[nbConn.id];
+      }
+    }
+    return null;
+  };
 
   // uses state to update dom, rather than dispatching "storage" event
   //   const addCell = (value: 'Markdown' | 'SPARQL' | 'FLUREEQL') => {
@@ -310,6 +377,7 @@ const Notebook: React.FC<NotebookProps> = ({
           <Cell
             key={`${id}-${idx}`}
             {...cell}
+            defaultConn={defaultConn}
             onChange={(newValue) => {
               const newCells = [...storedCells];
               newCells[idx].value = newValue;
@@ -321,7 +389,11 @@ const Notebook: React.FC<NotebookProps> = ({
         </div>
       ))}
       <div className="py-2">
-        <AddCell addCell={addCell} />
+        <AddCell
+          addCell={addCell}
+          conn={defaultConn}
+          defaultLedger={getDefaultLedger()}
+        />
       </div>
     </div>
   );

@@ -13,11 +13,20 @@ const AddCellMenu = ({
   addCell,
   index,
   position,
+  conn,
+  defaultLedger,
   children,
 }: {
-  addCell: (cellType: string, index?: number) => void;
+  addCell: (
+    cellType: string,
+    conn: string,
+    defaultLedger: string,
+    index?: number
+  ) => void;
   index?: number;
   position?: string;
+  conn: string;
+  defaultLedger: string;
   children: any;
 }) => {
   const [wave, setWave] = useState(false);
@@ -29,14 +38,17 @@ const AddCellMenu = ({
   const handleAddCell = (cellType) => {
     setWave(false);
     if (index !== undefined) {
-      addCell(cellType, index);
+      addCell(cellType, conn, defaultLedger, index);
     } else {
-      addCell(cellType);
+      addCell(cellType, conn, defaultLedger);
     }
   };
 
   return (
-    <Menu as="div" className="relative inline-flex items-center justify-center">
+    <Menu
+      as="div"
+      className="relative inline-flex items-center justify-center font-mono"
+    >
       <Menu.Button className="inline-flex justify-center items-center rounded-full">
         {children}
       </Menu.Button>

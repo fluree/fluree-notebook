@@ -20,6 +20,7 @@ const MarkdownCell: React.FC<{
   id: string;
   value: string;
   index: number;
+  defaultConn: string;
   addCell: (value: 'Markdown' | 'SPARQL' | 'FLUREEQL', index?: number) => void;
   moveCell: (direction: string, index: number) => void;
   duplicateCell: (index: number) => void;
@@ -29,6 +30,7 @@ const MarkdownCell: React.FC<{
   id,
   value,
   index,
+  defaultConn,
   addCell,
   moveCell,
   duplicateCell,
@@ -110,6 +112,26 @@ const MarkdownCell: React.FC<{
 
   const handleEditorChange = (value) => {
     onChange(value);
+  };
+
+  const getDefaultLedger = () => {
+    // get local storage
+    let localState = JSON.parse(localStorage.getItem('notebookState'));
+
+    // get active notebook, index
+    let activeNotebookId = localState.activeNotebookId;
+    let activeNotebook = localState.notebooks.find(
+      (obj) => obj.id === activeNotebookId
+    );
+
+    let nbConn = JSON.parse(defaultConn);
+
+    if (activeNotebook?.connCache) {
+      if (activeNotebook.connCache[nbConn.id]) {
+        return activeNotebook.connCache[nbConn.id];
+      }
+    }
+    return null;
   };
 
   const startEditing = () => {
@@ -202,7 +224,12 @@ const MarkdownCell: React.FC<{
             <Duplicate />
           </IconButton>
 
-          <AddCellMenu addCell={addCell} index={index}>
+          <AddCellMenu
+            addCell={addCell}
+            index={index}
+            conn={defaultConn}
+            defaultLedger={getDefaultLedger()}
+          >
             <IconButton
               onClick={() => setCellAboveMenu(!cellAboveMenu)}
               tooltip="Create Cell Above"
@@ -211,7 +238,12 @@ const MarkdownCell: React.FC<{
             </IconButton>
           </AddCellMenu>
 
-          <AddCellMenu addCell={addCell} index={index + 1}>
+          <AddCellMenu
+            addCell={addCell}
+            index={index + 1}
+            conn={defaultConn}
+            defaultLedger={getDefaultLedger()}
+          >
             <IconButton tooltip="Create Cell Below">
               <DocumentDown />
             </IconButton>
