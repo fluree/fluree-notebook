@@ -43,7 +43,6 @@ const InstancesGrid = () => {
   };
 
   useEffect(() => {
-    console.log(instances);
     localStorage.setItem('instances', JSON.stringify(instances));
   }, [instances]);
 

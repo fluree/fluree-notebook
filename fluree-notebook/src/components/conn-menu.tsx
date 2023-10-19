@@ -44,7 +44,6 @@ const ConnectionMenu = ({
   const getLocalStorage = () => {
     setInstances(JSON.parse(localStorage.getItem('instances')));
     setDatasets(JSON.parse(localStorage.getItem('datasets')));
-    console.log('shit was updated!');
   };
 
   useEffect(() => {
@@ -55,8 +54,6 @@ const ConnectionMenu = ({
   }, []);
 
   const handleClick = (conn: string) => {
-    console.log(conn);
-    console.log(cellIndex);
     if (cellIndex > -1) {
       updateCellConnection(conn);
     } else {
@@ -65,7 +62,6 @@ const ConnectionMenu = ({
   };
 
   const updateDefaultConnection = (conn: object) => {
-    console.log('global conn was changed');
     let newConn = JSON.stringify(conn);
     localStorage.setItem('defaultConn', newConn);
     setDefaultConn(newConn);
@@ -77,9 +73,6 @@ const ConnectionMenu = ({
     // then set default notebook conn
 
     let newConn = JSON.stringify(conn);
-
-    console.log(newConn);
-
     let localState = JSON.parse(localStorage.getItem('notebookState'));
     let activeNotebookId = localState.activeNotebookId;
     let activeNotebookIndex = localState.notebooks.findIndex(
@@ -104,7 +97,6 @@ const ConnectionMenu = ({
 
     if (result.length === 1) {
       activeNotebook.defaultConn = newConn;
-      console.log('default notebook connection updated!');
     }
 
     localState.notebooks[activeNotebookIndex] = activeNotebook;

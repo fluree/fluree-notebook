@@ -8,7 +8,7 @@ const initialState = {
   settingsOpen: false,
   defaultConn:
     localStorage.getItem('defaultConn') ??
-    '{"name":"localhost","url":"http://localhost:58090/fluree","type":"instance"}',
+    '{"id":"init","name":"localhost","url":"http://localhost:58090/fluree","type":"instance"}',
   //   toolbarVisible: true,
   //   localStorageListener: false,
 };

@@ -16,6 +16,8 @@ import { DocumentDown } from './components/icons/document-down';
 import { Cancel } from './components/icons/cancel';
 import AddCellMenu from './components/add-cell-menu';
 
+import useGlobal from './hooks/useGlobal';
+
 const MarkdownCell: React.FC<{
   id: string;
   value: string;
@@ -46,6 +48,10 @@ const MarkdownCell: React.FC<{
   const monacoRef = useRef();
   const editorRef = useRef();
   const actionRef = useRef();
+
+  const {
+    state: { defaultConn: globalConn },
+  } = useGlobal();
 
   function setEditorTheme(editor: any, monaco: any) {
     monacoRef.current = monaco;
@@ -124,7 +130,12 @@ const MarkdownCell: React.FC<{
       (obj) => obj.id === activeNotebookId
     );
 
-    let nbConn = JSON.parse(defaultConn);
+    let nbConn = '';
+    if (!defaultConn) {
+      nbConn = JSON.parse(globalConn);
+    } else {
+      nbConn = JSON.parse(defaultConn);
+    }
 
     if (activeNotebook?.connCache) {
       if (activeNotebook.connCache[nbConn.id]) {

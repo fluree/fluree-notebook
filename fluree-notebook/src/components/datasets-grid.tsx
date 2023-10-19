@@ -31,7 +31,6 @@ const DatasetsGrid = () => {
   };
 
   useEffect(() => {
-    console.log(datasets);
     localStorage.setItem('datasets', JSON.stringify(datasets));
   }, [datasets]);
 

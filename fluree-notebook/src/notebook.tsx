@@ -2,6 +2,7 @@ import MarkdownCell from './markdown-cell';
 import type { NotebookProps } from './types/index.d.ts';
 import { QueryCell } from './components/query-cell.tsx';
 import { AddCell } from './components/buttons/add-cell.tsx';
+import useGlobal from './hooks/useGlobal.tsx';
 
 interface CellProps {
   id: string;
@@ -177,8 +178,6 @@ const addCell = (
   let language: 'json' | 'sparql' = 'json';
   let type: 'monaco' | 'markdown' = 'monaco';
 
-  console.log('default ledger is... ', defaultLedger);
-
   switch (value) {
     case 'Markdown':
       type = 'markdown';
@@ -307,6 +306,10 @@ const Notebook: React.FC<NotebookProps> = ({
 }) => {
   console.log('STORED CELLS: ', storedCells);
 
+  const {
+    state: { defaultConn: globalConn },
+  } = useGlobal();
+
   const getDefaultLedger = () => {
     // get local storage
     let localState = JSON.parse(localStorage.getItem('notebookState'));
@@ -317,7 +320,12 @@ const Notebook: React.FC<NotebookProps> = ({
       (obj) => obj.id === activeNotebookId
     );
 
-    let nbConn = JSON.parse(defaultConn);
+    let nbConn = '';
+    if (!defaultConn) {
+      nbConn = JSON.parse(globalConn);
+    } else {
+      nbConn = JSON.parse(defaultConn);
+    }
 
     if (activeNotebook?.connCache) {
       if (activeNotebook.connCache[nbConn.id]) {

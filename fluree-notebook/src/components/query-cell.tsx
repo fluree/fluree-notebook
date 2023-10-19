@@ -197,12 +197,7 @@ export const QueryCell = ({
   };
 
   const flureePost = (endpoint: string, key?: string) => {
-    let url = '';
-    if (endpoint.startsWith('https://')) {
-      url = endpoint;
-    } else {
-      url = `/${endpoint}`;
-    }
+    let url = `${connState.url}/${endpoint}`;
 
     if (language === 'sparql') {
       axios
@@ -217,21 +212,35 @@ export const QueryCell = ({
           setResultState(JSON.stringify(d.data, null, 2));
         })
         .catch((e) => {
+          console.log(e);
           setResultStatusState('error');
           let returnedValue = '';
-          if (e.response.data.humanized) {
+          if (e.response?.data?.humanized) {
             returnedValue = e.response.data.humanized;
-          } else {
+          } else if (e.response?.data) {
             returnedValue = e.response.data;
+          } else {
+            returnedValue = e.message;
           }
-          setResultState(JSON.stringify(returnedValue, null, 2));
+
+          if (typeof returnedValue === 'object') {
+            returnedValue = JSON.stringify(returnedValue, null, 2);
+          }
+
+          setResultState(returnedValue);
         });
     } else {
+      let headers = {
+        'Content-Type': 'application/json',
+      };
+
+      if (connState.key) {
+        headers['Authorization'] = `Bearer ${connState.key}`;
+      }
+
       axios
         .post(url, JSON.parse(value), {
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers,
           withCredentials: false,
         })
         .then((d) => {
@@ -239,15 +248,22 @@ export const QueryCell = ({
           setResultState(JSON.stringify(d.data, null, 2));
         })
         .catch((e) => {
+          console.log(e);
           setResultStatusState('error');
-
           let returnedValue = '';
-          if (e.response.data.humanized) {
+          if (e.response?.data?.humanized) {
             returnedValue = e.response.data.humanized;
-          } else {
+          } else if (e.response?.data) {
             returnedValue = e.response.data;
+          } else {
+            returnedValue = e.message;
           }
-          setResultState(JSON.stringify(returnedValue, null, 2));
+
+          if (typeof returnedValue === 'object') {
+            returnedValue = JSON.stringify(returnedValue, null, 2);
+          }
+
+          setResultState(returnedValue);
         });
     }
   };
@@ -337,8 +353,6 @@ export const QueryCell = ({
       }
     }
 
-    console.log(activeNotebook);
-
     localState.notebooks[activeNotebookIndex] = activeNotebook;
     localStorage.setItem('notebookState', JSON.stringify(localState));
     window.dispatchEvent(new Event('storage'));
@@ -386,7 +400,12 @@ export const QueryCell = ({
       (obj) => obj.id === activeNotebookId
     );
 
-    let nbConn = JSON.parse(defaultConn);
+    let nbConn = '';
+    if (!defaultConn) {
+      nbConn = JSON.parse(globalConn);
+    } else {
+      nbConn = JSON.parse(defaultConn);
+    }
 
     if (activeNotebook?.connCache) {
       if (activeNotebook.connCache[nbConn.id]) {
