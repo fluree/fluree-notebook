@@ -57,7 +57,7 @@ export const NotebookShell = (): JSX.Element => {
     if (!localStorage.getItem('instances')) {
       localStorage.setItem(
         'instances',
-        '[{"name":"localhost","url":"http://localhost:58090/fluree","type":"instance"}]'
+        '[{"id":"init","name":"localhost","url":"http://localhost:58090/fluree","type":"instance"}]'
       );
     }
 
@@ -68,7 +68,7 @@ export const NotebookShell = (): JSX.Element => {
     if (!localStorage.getItem('defaultConn')) {
       localStorage.setItem(
         'defaultConn',
-        '{"name":"localhost","url":"http://localhost:58090/fluree","type":"instance"}'
+        '{"id":"init","name":"localhost","url":"http://localhost:58090/fluree","type":"instance"}'
       );
     }
 

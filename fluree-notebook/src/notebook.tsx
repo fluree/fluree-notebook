@@ -119,6 +119,21 @@ const deleteCell = (index: number) => {
   // set cells of active notebook
   activeNotebook.cells = activeNotebookCells;
 
+  // if all cells are same, update notebook default
+  const seen = new Set();
+  const result = [];
+
+  for (const item of activeNotebook.cells) {
+    if (!seen.has(item.conn) && item.conn !== undefined) {
+      seen.add(item.conn);
+      result.push(item.conn);
+    }
+  }
+
+  if (result.length === 1) {
+    activeNotebook.defaultConn = result[0];
+  }
+
   // move changed item back into main object; set local storage
   localState.notebooks[activeNotebookIndex] = activeNotebook;
   localStorage.setItem('notebookState', JSON.stringify(localState));

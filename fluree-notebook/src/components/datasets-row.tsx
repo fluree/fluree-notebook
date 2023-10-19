@@ -163,7 +163,12 @@ const ConnectionRow = ({ row, index, update, remove }) => {
               <IconButton onClick={startEditing} tooltip="Edit Details">
                 <PencilSquare />
               </IconButton>
-              <IconButton onClick={removeDataset} tooltip="Remove Dataset">
+              <IconButton
+                onClick={removeDataset}
+                tooltip={`Remove ${
+                  row.type === 'dataset' ? 'Dataset' : 'Instance'
+                }`}
+              >
                 <Delete />
               </IconButton>
             </div>
