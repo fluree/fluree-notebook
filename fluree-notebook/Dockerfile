@@ -13,10 +13,11 @@ WORKDIR /app
 COPY package.json .yarnrc.yml ./
 
 # Install the dependencies
-RUN yarn
+# RUN yarn
+RUN npm i
 
 # Set the command to start the React application in development mode
-CMD ["yarn", "run", "dev"]
+CMD ["npm", "run", "dev"]
 
 # Expose the port for the frontend application
 EXPOSE 5173

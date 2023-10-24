@@ -10,7 +10,7 @@ services:
       - ./fluree-notebook:/app
     depends_on:
       - node_server
-    command: sh -c "npm rebuild esbuild && yarn dev"
+    command: sh -c "npm rebuild esbuild && npm run dev"
 
   node_server:
     build:
