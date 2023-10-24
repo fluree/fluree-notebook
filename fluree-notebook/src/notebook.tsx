@@ -1,8 +1,15 @@
-import MarkdownCell from './markdown-cell';
+import { useEffect } from 'react';
+import MarkdownCell from './components/markdown-cell.tsx';
 import type { NotebookProps } from './types/index.d.ts';
 import { QueryCell } from './components/query-cell.tsx';
 import { AddCell } from './components/buttons/add-cell.tsx';
 import useGlobal from './hooks/useGlobal.tsx';
+import { Mermaid } from 'mdx-mermaid/Mermaid';
+import { mermaidTheme } from './mermaidTheme';
+import MermaidCell from './components/mermaid-cell.tsx';
+
+import { Sandbox } from './sandbox.tsx';
+import AdmonitionCell from './components/admonition-cell.tsx';
 
 interface CellProps {
   id: string;
@@ -13,8 +20,10 @@ interface CellProps {
   index: number;
   revert?: string;
   defaultConn?: string;
-  createCell?: boolean;
   language?: 'json' | 'sparql';
+  conn: string;
+  titleCell: boolean;
+  admonitionType: 'note' | 'info' | 'tip' | 'caution';
   addCell: (value: 'Markdown' | 'SPARQL' | 'FLUREEQL', index?: number) => void;
   moveCell: (direction: string, index: number) => void;
   duplicateCell: (index: number) => void;
@@ -22,6 +31,8 @@ interface CellProps {
   clearResult: (index: number) => void;
   onChange: (value: string) => void;
   onDelete: () => void;
+  memTransact: (val: any) => void;
+  memQuery: (val: any) => void;
 }
 
 const duplicateCell = (index: number) => {
@@ -84,7 +95,7 @@ const moveCell = (direction, index) => {
     newIndex = Math.min(...[newIndex, activeNotebookCells.length - 1]);
   } else if (direction === 'up') {
     newIndex--;
-    newIndex = Math.max(...[newIndex, 0]);
+    newIndex = Math.max(...[newIndex, 1]);
   }
 
   const itemToMove = activeNotebookCells.splice(index, 1)[0];
@@ -175,44 +186,62 @@ WHERE {
 const defaultFlureeQL = (defaultLedger: string) =>
   JSON.stringify(
     {
-      from: defaultLedger ?? 'notebook1',
-      select: '?s',
+      from: defaultLedger ?? 'ledgerName',
+      select: { '?s': ['*'] },
       where: [['?s', 'rdf:type', 'rdfs:Class']],
     },
     null,
     2
   );
 
+const defaultAdmonition = 'this is an admonition cell';
+
 const addCell = (
-  value: 'Markdown' | 'SPARQL' | 'FLUREEQL',
+  value: 'Markdown' | 'Mermaid' | 'SPARQL' | 'FLUREEQL' | 'Admonition',
   conn: string,
-  defaultLedger?: string,
+  defaultLedger: string = 'ledgerName',
   index?: number
 ) => {
   let newVal: string = '';
   let language: 'json' | 'sparql' = 'json';
-  let type: 'monaco' | 'markdown' = 'monaco';
+  let type: 'monaco' | 'mermaid' | 'markdown' | 'admonition' = 'monaco';
 
   switch (value) {
-    case 'Markdown':
-      type = 'markdown';
-      newVal = defaultMarkdown;
+    case 'FLUREEQL':
+      newVal = defaultFlureeQL(defaultLedger);
       break;
     case 'SPARQL':
       language = 'sparql';
       newVal = defaultSPARQL(defaultLedger);
       break;
-    case 'FLUREEQL':
-      newVal = defaultFlureeQL(defaultLedger);
+    case 'Markdown':
+      type = 'markdown';
+      newVal = defaultMarkdown;
       break;
+    case 'Mermaid':
+      type = 'mermaid';
+      newVal = `graph LR
+  node1 -->|relation| e((node2)):::lightGreen
+  classDef lightGreen fill:lightGreen`;
+      break;
+    case 'Admonition':
+      type = 'admonition';
+      newVal = defaultAdmonition;
+      break;
+    default:
+      newVal = 'test';
   }
 
   const id = Math.random().toString(36).substring(7); // generate a unique id
   let newCell = { id, type, conn, value: newVal, language };
 
-  if (value === 'Markdown') {
+  if (['Mermaid', 'Markdown', 'Admonition'].includes(value)) {
     newCell.editing = true;
     delete newCell.conn;
+  }
+
+  if (value === 'Admonition') {
+    newCell.admonitionType = 'info';
   }
 
   // get local storage
@@ -269,8 +298,11 @@ const Cell: React.FC<CellProps> = ({
   index,
   defaultConn,
   conn,
-  createCell,
+  titleCell,
+  admonitionType,
   language = 'json',
+  memTransact,
+  memQuery,
   onChange,
   onDelete,
 }) => {
@@ -281,8 +313,36 @@ const Cell: React.FC<CellProps> = ({
           id={id}
           index={index}
           value={value}
-          addCell={addCell}
           defaultConn={defaultConn}
+          titleCell={titleCell}
+          addCell={addCell}
+          moveCell={moveCell}
+          duplicateCell={duplicateCell}
+          deleteCell={deleteCell}
+          onChange={onChange}
+        />
+      )}
+      {type === 'mermaid' && (
+        <MermaidCell
+          id={id}
+          index={index}
+          value={value}
+          defaultConn={defaultConn}
+          addCell={addCell}
+          moveCell={moveCell}
+          duplicateCell={duplicateCell}
+          deleteCell={deleteCell}
+          onChange={onChange}
+        />
+      )}
+      {type === 'admonition' && (
+        <AdmonitionCell
+          id={id}
+          index={index}
+          value={value}
+          defaultConn={defaultConn}
+          admonitionType={admonitionType}
+          addCell={addCell}
           moveCell={moveCell}
           duplicateCell={duplicateCell}
           deleteCell={deleteCell}
@@ -298,7 +358,6 @@ const Cell: React.FC<CellProps> = ({
           resultStatus={resultStatus}
           defaultConn={defaultConn}
           conn={conn}
-          createCell={createCell ? createCell : undefined}
           addCell={addCell}
           moveCell={moveCell}
           duplicateCell={duplicateCell}
@@ -307,6 +366,8 @@ const Cell: React.FC<CellProps> = ({
           language={language}
           onChange={onChange}
           index={index}
+          memTransact={memTransact}
+          memQuery={memQuery}
         />
       )}
     </div>
@@ -318,8 +379,12 @@ const Notebook: React.FC<NotebookProps> = ({
   storedCells,
   defaultConn,
   onCellsChange,
+  memQuery,
+  memTransact,
 }) => {
-  console.log('STORED CELLS: ', storedCells);
+  useEffect(() => {
+    console.log('STORED CELLS: ', storedCells);
+  }, [storedCells]);
 
   const {
     state: { defaultConn: globalConn },
@@ -407,6 +472,8 @@ const Notebook: React.FC<NotebookProps> = ({
               onCellsChange(newCells);
             }}
             onDelete={() => deleteCell(idx)}
+            memTransact={memTransact}
+            memQuery={memQuery}
             index={idx}
           />
         </div>
@@ -418,6 +485,7 @@ const Notebook: React.FC<NotebookProps> = ({
           defaultLedger={getDefaultLedger()}
         />
       </div>
+      {/* <Sandbox /> */}
     </div>
   );
 };

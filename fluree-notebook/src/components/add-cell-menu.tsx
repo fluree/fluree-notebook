@@ -4,6 +4,10 @@ import { PencilIcon } from '@heroicons/react/20/solid';
 import { Sparql } from './icons/sparql';
 import { Wave1 } from './icons/wave1';
 import { Wave2 } from './icons/wave2';
+import { Mermaid } from './icons/mermaid';
+import { Markdown } from './icons/markdown';
+import { Info } from './icons/info';
+import { Caution } from './icons/caution';
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ');
@@ -63,30 +67,20 @@ const AddCellMenu = ({
         leaveTo="transform opacity-0 scale-95"
       >
         <Menu.Items
-          className={`absolute left-1 ${
-            position === 'above' ? 'bottom-1' : '-top-1'
+          className={`absolute left-1 flex w-[220px]
+          ${
+            position === 'above'
+              ? 'bottom-1 flex-col-reverse'
+              : '-top-1 flex-col'
           } z-[100] mt-2 w-56 origin-top-right divide-y divide-gray-100 
         dark:divide-ui-neutral-800 rounded-md bg-white dark:bg-ui-neutral-900 shadow-lg ring-1 ring-black 
         ring-opacity-5 focus:outline-none`}
         >
-          <div className="py-1">
-            <Menu.Item>
-              {({ active }) => (
-                <span
-                  onClick={() => handleAddCell('Markdown')}
-                  className={classNames(
-                    active ? activeClasses : classes,
-                    'group flex items-center px-4 py-2 text-sm'
-                  )}
-                >
-                  <PencilIcon
-                    className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
-                    aria-hidden="true"
-                  />
-                  Markdown
-                </span>
-              )}
-            </Menu.Item>
+          <div
+            className={`py-1 flex ${
+              position === 'above' ? 'flex-col-reverse' : 'flex-col'
+            }`}
+          >
             <Menu.Item>
               {({ active }) => (
                 <span
@@ -134,6 +128,57 @@ const AddCellMenu = ({
                     aria-hidden="true"
                   />
                   SPARQL
+                </span>
+              )}
+            </Menu.Item>
+            <Menu.Item>
+              {({ active }) => (
+                <span
+                  onClick={() => handleAddCell('Markdown')}
+                  className={classNames(
+                    active ? activeClasses : classes,
+                    'group flex items-center px-4 py-2 text-sm'
+                  )}
+                >
+                  <Markdown
+                    className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
+                    aria-hidden="true"
+                  />
+                  Markdown
+                </span>
+              )}
+            </Menu.Item>
+            <Menu.Item>
+              {({ active }) => (
+                <span
+                  onClick={() => handleAddCell('Mermaid')}
+                  className={classNames(
+                    active ? activeClasses : classes,
+                    'group flex items-center px-4 py-2 text-sm text-[snow]'
+                  )}
+                >
+                  <Mermaid
+                    className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
+                    aria-hidden="true"
+                  />
+                  Mermaid
+                </span>
+              )}
+            </Menu.Item>
+            <Menu.Item>
+              {({ active }) => (
+                <span
+                  onClick={() => handleAddCell('Admonition')}
+                  className={classNames(
+                    active ? activeClasses : classes,
+                    'group flex items-center px-4 py-2 text-sm text-[snow]'
+                  )}
+                >
+                  <Caution
+                    className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
+                    aria-hidden="true"
+                  />
+                  Admonition
                 </span>
               )}
             </Menu.Item>

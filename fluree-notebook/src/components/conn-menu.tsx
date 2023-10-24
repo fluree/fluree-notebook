@@ -6,6 +6,7 @@ import { Connections } from './icons/connections';
 import useGlobal from '../hooks/useGlobal';
 import { Check } from './icons/check';
 import { CheckCircle } from './icons/checkCircle';
+import { Globe } from './icons/globe';
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ');
@@ -32,6 +33,13 @@ const ConnectionMenu = ({
     'cursor-pointer dark:bg-ui-neutral-800 bg-gray-100 text-gray-900 dark:text-white';
   const classes =
     'dark:bg-ui-neutral-900 text-gray-700 dark:text-[rgb(220,220,220)]';
+
+  const inMemoryObj = {
+    id: 'mem',
+    name: 'memory',
+    url: '',
+    type: 'memory',
+  };
 
   const {
     state: { settingsOpen },
@@ -109,7 +117,7 @@ const ConnectionMenu = ({
       as="div"
       className="relative inline-flex items-center justify-center font-mono"
     >
-      <Menu.Button className="inline-flex justify-center items-center rounded-full">
+      <Menu.Button className="inline-flex justify-center items-center rounded-md">
         {children}
       </Menu.Button>
 
@@ -125,7 +133,7 @@ const ConnectionMenu = ({
         <Menu.Items
           className={`absolute left-1 ${
             position === 'above' ? 'bottom-1' : '-top-1'
-          } z-[100] mt-2 w-56 origin-top-right divide-y divide-gray-100 
+          } z-[1020] mt-2 w-56 origin-top-right divide-y divide-gray-100 
         dark:divide-ui-neutral-800 rounded-md bg-white dark:bg-ui-neutral-900 shadow-lg ring-1 ring-black 
         ring-opacity-5 focus:outline-none`}
         >
@@ -142,7 +150,7 @@ const ConnectionMenu = ({
                       )}
                     >
                       <Cube
-                        className="mr-3 h-5 w-5 text-gray-400 dark:text-ui-yellow-400 text-ui-yellow-400"
+                        className="mr-3 h-5 w-5 dark:text-ui-yellow-400 text-ui-yellow-400"
                         aria-hidden="true"
                       />
                       {p.name}
@@ -171,7 +179,7 @@ const ConnectionMenu = ({
                       )}
                     >
                       <Cloud
-                        className="mr-3 h-5 w-5 text-gray-400 dark:text-ui-main-500 text-ui-main-500"
+                        className="mr-3 h-5 w-5 dark:text-ui-main-500 text-ui-main-500"
                         aria-hidden="true"
                       />
                       {p.name}
@@ -186,6 +194,32 @@ const ConnectionMenu = ({
               ))}
             </div>
           )}
+
+          <div className="py-1">
+            <Menu.Item>
+              {({ active }) => (
+                <span
+                  onClick={() => handleClick(inMemoryObj)}
+                  className={classNames(
+                    active ? activeClasses : classes,
+                    'group flex items-center px-4 py-2 text-sm'
+                  )}
+                >
+                  <Globe
+                    className="mr-3 h-5 w-5  dark:text-ui-green-500 text-ui-green-500"
+                    aria-hidden="true"
+                  />
+                  memory
+                  {activeConnId === 'mem' && (
+                    <span className="text-ui-green-400 absolute right-4">
+                      <CheckCircle className="w-5 h-5 pb-[1px]" />
+                    </span>
+                  )}{' '}
+                </span>
+              )}
+            </Menu.Item>
+          </div>
+
           {!settingsOpen && (
             <div className="py-1">
               <Menu.Item>

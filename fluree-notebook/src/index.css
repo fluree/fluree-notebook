@@ -10,8 +10,27 @@ html.dark {
     transition: background-color 0.25s ease-in-out;
 } */
 
-.prose pre {
+.prose > pre {
     filter: invert(1) hue-rotate(180deg) brightness(1.01);
+}
+
+.prose > pre {
+    border-radius: 6px;
+    outline: 1px solid rgba(100,100,100,0.5);
+}
+
+.prose > pre {
+    padding: 0;
+}
+
+.prose > pre pre {
+    margin: 0 !important;
+}
+
+.icon-button-sm svg {
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
 }
 
 .icon-button-md svg {
@@ -32,4 +51,12 @@ html.dark {
 
 .tippy-popper[aria-hidden="true"] {
     display: none;
+}
+
+.mermaid-dark svg {
+    filter: invert(1) hue-rotate(180deg) brightness(1.5);
+}
+
+.tippy-popper {
+    z-index: 999999 !important;
 }

@@ -9,6 +9,8 @@ interface NotebookProps {
   storedCells: Cell[];
   defaultConn?: string;
   onCellsChange: (cells: Cell[]) => void;
+  memTransact: (val: any) => void;
+  memQuery: (val: any) => void;
 }
 
 type NotebookState = {

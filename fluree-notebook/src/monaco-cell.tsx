@@ -12,6 +12,7 @@ const MonacoCell: React.FC<{
   monacoRef: any;
   editorRef: any;
   readOnly: boolean;
+  wrap: boolean;
 }> = ({
   value,
   language,
@@ -22,6 +23,7 @@ const MonacoCell: React.FC<{
   monacoRef,
   editorRef,
   readOnly,
+  wrap,
 }) => {
   const [height, setHeight] = useState(300);
 
@@ -127,6 +129,7 @@ const MonacoCell: React.FC<{
               alwaysConsumeMouseWheel: false,
             },
             readOnly: readOnly,
+            wordWrap: wrap ? 'on' : 'off',
           }}
           value={value}
           height={`${height}px`}

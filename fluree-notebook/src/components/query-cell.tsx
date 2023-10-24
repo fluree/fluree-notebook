@@ -34,6 +34,8 @@ import { Wave1 } from './icons/wave1';
 import { ArrowUturnLeft } from './icons/arrowUturnLeft';
 import ConnectionMenu from './conn-menu';
 import useGlobal from '../hooks/useGlobal';
+import { Check } from './icons/check';
+import { Globe } from './icons/globe';
 
 export interface IQueryProps {}
 
@@ -53,6 +55,8 @@ export const QueryCell = ({
   deleteCell,
   clearResult,
   onChange,
+  memTransact,
+  memQuery,
 }: {
   id: string;
   value: string;
@@ -70,10 +74,14 @@ export const QueryCell = ({
   clearResult: (index: number) => void;
   onClick?: (element: React.MouseEvent<HTMLElement>) => void;
   onChange: (value: string) => void;
+  memTransact: (val: any) => void;
+  memQuery: (val: any) => void;
 }): JSX.Element => {
   const [resultState, setResultState] = useState<string | null>(
     result ? JSON.parse(result) : null
   );
+  const [copied, setCopied] = useState(false);
+  const [resultCopied, setResultCopied] = useState(false);
   const [resultStatusState, setResultStatusState] = useState<
     'success' | 'error' | 'warn' | null
   >(null);
@@ -155,18 +163,26 @@ export const QueryCell = ({
           'having',
           'values',
         ];
-        if (keys.every((e) => transactKeys.indexOf(e) > -1)) {
-          setDefaultAction('transact');
-        } else if (keys.every((e) => createKeys.indexOf(e) > -1)) {
-          if (connState.type === 'dataset') {
-            setDefaultAction('transact');
+        if (connState.type === 'memory') {
+          if (keys.every((e) => queryKeys.indexOf(e) > -1)) {
+            setDefaultAction('query');
           } else {
-            setDefaultAction('create');
+            setDefaultAction('transact');
           }
-        } else if (keys.every((e) => queryKeys.indexOf(e) > -1)) {
-          setDefaultAction('query');
         } else {
-          setDefaultAction(null);
+          if (keys.every((e) => transactKeys.indexOf(e) > -1)) {
+            setDefaultAction('transact');
+          } else if (keys.every((e) => createKeys.indexOf(e) > -1)) {
+            if (connState.type === 'dataset') {
+              setDefaultAction('transact');
+            } else {
+              setDefaultAction('create');
+            }
+          } else if (keys.every((e) => queryKeys.indexOf(e) > -1)) {
+            setDefaultAction('query');
+          } else {
+            setDefaultAction(null);
+          }
         }
       } catch (e) {
         setDefaultAction(null);
@@ -196,6 +212,72 @@ export const QueryCell = ({
     }
   };
 
+  function jsonToMermaid(data) {
+    let mermaidString = 'graph LR\n';
+    const createdNodes = new Set();
+    const createdEdges = new Set();
+    const createdAttributes = new Set();
+
+    const createNodeId = (id) => id.replace(/[:/#.]/g, '');
+
+    const createEdgeId = (source, target, label) =>
+      `${source}-${target}-${label}`;
+
+    const createAttributeId = (nodeId, attribute, value) =>
+      `${nodeId}-${attribute}-${value}`;
+
+    const getIdFromItem = (item) => item['id'] || item['@id'];
+
+    const processNode = (item, parentId = null, edgeLabel = '') => {
+      if (item === null || item === undefined) return;
+
+      if (Array.isArray(item)) {
+        item.forEach((subItem) => processNode(subItem, parentId, edgeLabel));
+      } else if (typeof item === 'object' && item !== null) {
+        const nodeId = getIdFromItem(item)
+          ? createNodeId(getIdFromItem(item))
+          : createNodeId(Math.random().toString(36).substr(2, 9));
+
+        if (!createdNodes.has(nodeId)) {
+          createdNodes.add(nodeId);
+          mermaidString += `  ${nodeId}(${
+            item['name'] || getIdFromItem(item) || nodeId
+          })\n`;
+        }
+
+        if (parentId && edgeLabel) {
+          const edgeId = createEdgeId(parentId, nodeId, edgeLabel);
+          if (!createdEdges.has(edgeId)) {
+            createdEdges.add(edgeId);
+            mermaidString += `  ${parentId} -->|${edgeLabel}| ${nodeId}\n`;
+          }
+        }
+
+        Object.keys(item).forEach((key) => {
+          if (key !== 'id' && key !== '@id' && key !== 'name') {
+            processNode(item[key], nodeId, key);
+          }
+        });
+      } else {
+        const valueNodeId = createNodeId(
+          Math.random().toString(36).substr(2, 9)
+        );
+        const attributeId = createAttributeId(parentId, edgeLabel, item);
+
+        if (!createdAttributes.has(attributeId)) {
+          createdAttributes.add(attributeId);
+          mermaidString += `  ${parentId} -->|${edgeLabel}| ${valueNodeId}("${item}")\n`;
+        }
+      }
+    };
+
+    data.forEach((item) => {
+      processNode(item);
+    });
+
+    return mermaidString;
+  }
+
   const flureePost = (endpoint: string, key?: string) => {
     let url = `${connState.url}/${endpoint}`;
 
@@ -212,7 +294,6 @@ export const QueryCell = ({
           setResultState(JSON.stringify(d.data, null, 2));
         })
         .catch((e) => {
-          console.log(e);
           setResultStatusState('error');
           let returnedValue = '';
           if (e.response?.data?.humanized) {
@@ -246,9 +327,15 @@ export const QueryCell = ({
         .then((d) => {
           setResultStatusState('success');
           setResultState(JSON.stringify(d.data, null, 2));
+          if (endpoint === 'query') {
+            try {
+              console.log(jsonToMermaid(d.data));
+            } catch (e) {
+              console.warn('error converting JSON string to mermaid.');
+            }
+          }
         })
         .catch((e) => {
-          console.log(e);
           setResultStatusState('error');
           let returnedValue = '';
           if (e.response?.data?.humanized) {
@@ -296,22 +383,28 @@ export const QueryCell = ({
     if (conn) {
       // doesn't work for SPARQL
       if (language === 'json') {
-        let val = JSON.parse(value);
-        let newConn = JSON.parse(conn);
-        if (newConn.type === 'dataset') {
-          if (['transact', 'create'].includes(defaultAction)) {
-            if (val['f:ledger']) {
-              val['f:ledger'] = newConn.name;
-            } else if (val.ledger) {
-              val.ledger = newConn.name;
-            }
-          } else if (defaultAction === 'query') {
-            if (val.from) {
-              val.from = newConn.name;
+        try {
+          let val = JSON.parse(value);
+          let newConn = JSON.parse(conn);
+          if (newConn.type === 'dataset') {
+            if (['transact', 'create'].includes(defaultAction)) {
+              if (val['f:ledger']) {
+                val['f:ledger'] = newConn.name;
+              } else if (val.ledger) {
+                val.ledger = newConn.name;
+              }
+            } else if (defaultAction === 'query') {
+              if (val.from) {
+                val.from = newConn.name;
+              }
             }
           }
+          onChange(JSON.stringify(val, null, 2));
+        } catch (e) {
+          console.warn(
+            `There was a problem parsing JSON value for cell ${id}.`
+          );
         }
-        onChange(JSON.stringify(val, null, 2));
       }
     }
   }, [conn]);
@@ -376,17 +469,30 @@ export const QueryCell = ({
     }
   };
 
+  const indicateCopied = () => {
+    setCopied(true);
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+  };
+
+  const indicateResultCopied = () => {
+    setResultCopied(true);
+    setTimeout(() => {
+      setResultCopied(false);
+    }, 2000);
+  };
+
   const notify = () => {
     toast('Copied!', {
       position: 'bottom-left',
-      autoClose: 3000,
+      autoClose: 2000,
       hideProgressBar: true,
       closeOnClick: true,
       pauseOnHover: true,
       draggable: true,
       progress: undefined,
-      type: 'success',
-      theme: 'colored',
+      className: 'bg-ui-green-600 text-white',
     });
   };
 
@@ -469,10 +575,16 @@ export const QueryCell = ({
     onChange(formattedQuery);
   }
 
+  const getZIndex = () => {
+    let str = `z-[${1000 - index}]`;
+    console.log(str);
+    return str;
+  };
+
   return (
     <div className="mb-6" id={id}>
       <div className="flex -ml-[10px] w-[calc(100%)] justify-start pl-8 items-end">
-        <div className="absolute w-60 h-8 -mb-[1px] flex items-center z-[2] overflow-hidden">
+        <div className="absolute w-60 h-8 -mb-[1px] flex items-center -z-2 overflow-hidden">
           <div
             className={`rounded-full h-[25px] w-[27px] relative bottom-[4px] animate-pulse
             ${focused || hover ? '' : 'hidden'}
@@ -498,8 +610,9 @@ export const QueryCell = ({
           id="monaco-toolbar"
           onMouseEnter={() => setHover(true)}
           onMouseLeave={() => setHover(false)}
+          style={{ zIndex: 10000 - index }}
           className={`bg-ui-main-300 dark:bg-ui-neutral-700 bg-opacity-20 dark:bg-opacity-20 px-3 py-[3px] rounded-t-md
-          backdrop-blur transition flex gap-1 z-10 
+          backdrop-blur transition flex gap-1
           ${
             focused || hover
               ? ''
@@ -508,7 +621,11 @@ export const QueryCell = ({
         >
           <IconButton
             actionRef={defaultAction === 'query' ? actionRef : null}
-            onClick={() => flureePost('query')}
+            onClick={
+              connState.type === 'memory'
+                ? () => memQuery(value, setResultState)
+                : () => flureePost('query')
+            }
             tooltip={
               defaultAction === 'query' && focused ? 'Query [F9]' : 'Query'
             }
@@ -529,7 +646,11 @@ export const QueryCell = ({
             <>
               <IconButton
                 actionRef={defaultAction === 'transact' ? actionRef : null}
-                onClick={() => flureePost('transact')}
+                onClick={
+                  connState.type === 'memory'
+                    ? () => memTransact(value, setResultState)
+                    : () => flureePost('transact')
+                }
                 tooltip={
                   defaultAction === 'transact' && focused
                     ? 'Transact [F9]'
@@ -583,11 +704,20 @@ export const QueryCell = ({
             <Sparkles />
           </IconButton>
 
-          <CopyToClipboard text={value} onCopy={() => notify()}>
-            <IconButton tooltip="Copy Contents">
-              <Clipboard />
-            </IconButton>
-          </CopyToClipboard>
+          {copied && (
+            <CopyToClipboard text={value} onCopy={indicateCopied}>
+              <IconButton tooltip="Copied!">
+                <Check />
+              </IconButton>
+            </CopyToClipboard>
+          )}
+          {!copied && (
+            <CopyToClipboard text={value} onCopy={indicateCopied}>
+              <IconButton tooltip="Copy Contents">
+                <Clipboard />
+              </IconButton>
+            </CopyToClipboard>
+          )}
 
           {/* <IconButton tooltip="Move Cell (Drag)">
             <Handle />
@@ -648,6 +778,7 @@ export const QueryCell = ({
           id="data-source"
           onMouseEnter={() => setHover(true)}
           onMouseLeave={() => setHover(false)}
+          style={{ zIndex: 10000 - 2 * index }}
           className={`bg-ui-main-300 dark:bg-ui-neutral-700 bg-opacity-20 dark:bg-opacity-20 px-4 pb-[8px] pt-[10px] ml-3 font-mono rounded-t-md
           backdrop-blur transition flex gap-1 z-10 text-sm  text-ui-neutral-800 dark:text-ui-neutral-300 hover:dark:text-gray-300 cursor-pointer delay-200 
           ${
@@ -660,7 +791,7 @@ export const QueryCell = ({
           <ConnectionMenu activeConnId={connState.id} cellIndex={index}>
             {connState.type === 'instance' && (
               <Cube
-                className={`mr-[4px] -ml-[2px] -mt-[1px] h-5 w-5 text-ui-yellow-400 dark:text-ui-yellow-400 delay-200 transition 
+                className={`mr-[5px] -ml-[2px] -mt-[1px] h-5 w-5 text-ui-yellow-400 dark:text-ui-yellow-400 delay-200 transition 
                 ${
                   focused || hover
                     ? 'dark:text-opacity-100 text-opacity-100'
@@ -671,7 +802,18 @@ export const QueryCell = ({
             )}
             {connState.type === 'dataset' && (
               <Cloud
-                className={`mr-[4px] -ml-[2px] -mt-[1px] h-5 w-5 text-ui-main-500 dark:text-ui-main-500 delay-200 transition 
+                className={`mr-[5px] -ml-[2px] -mt-[1px] h-5 w-5 text-ui-main-500 dark:text-ui-main-500 delay-200 transition 
+              ${
+                focused || hover
+                  ? 'dark:text-opacity-100 text-opacity-100'
+                  : 'dark:text-opacity-50 text-opacity-50'
+              }`}
+                aria-hidden="true"
+              />
+            )}
+            {connState.type === 'memory' && (
+              <Globe
+                className={`mr-[5px] -ml-[2px] -mt-[1px] h-5 w-5 text-ui-green-500 dark:text-ui-green-500 delay-200 transition 
               ${
                 focused || hover
                   ? 'dark:text-opacity-100 text-opacity-100'
@@ -686,7 +828,7 @@ export const QueryCell = ({
       </div>
       <div
         // className={`bg-ui-surface-lite-050 rounded-md border-solid  border w-[99%] relative overflow-hidden`}
-        className="rounded-md border-solid border-ui-main-400 border relative overflow-hidden mr-[23px]"
+        className="rounded-md border-solid border-2 border-ui-main-400 border relative overflow-hidden mr-[23px]"
       >
         <MonacoCell
           value={value}
@@ -703,7 +845,7 @@ export const QueryCell = ({
       {resultState && (
         <div className={`pt-2 result-${resultStatusState}`}>
           <div
-            className={`rounded-md border-solid ${
+            className={`rounded-md border-solid border-2 ${
               resultStatusState === 'error'
                 ? 'border-ui-red-400 dark:border-ui-red-300'
                 : resultStatusState === 'warn'
@@ -734,11 +876,26 @@ export const QueryCell = ({
                   </>
                 )}
 
-                <CopyToClipboard text={resultState} onCopy={() => notify()}>
-                  <IconButton tooltip="Copy Contents">
-                    <Clipboard />
-                  </IconButton>
-                </CopyToClipboard>
+                {resultCopied && (
+                  <CopyToClipboard
+                    text={resultState}
+                    onCopy={indicateResultCopied}
+                  >
+                    <IconButton tooltip="Copied!">
+                      <Check />
+                    </IconButton>
+                  </CopyToClipboard>
+                )}
+                {!resultCopied && (
+                  <CopyToClipboard
+                    text={resultState}
+                    onCopy={indicateResultCopied}
+                  >
+                    <IconButton tooltip="Copy Contents">
+                      <Clipboard />
+                    </IconButton>
+                  </CopyToClipboard>
+                )}
 
                 <IconButton
                   onClick={() => clearResult(index)}
@@ -754,6 +911,7 @@ export const QueryCell = ({
               setHover={setHover}
               monacoRef={resultRef}
               readOnly={true}
+              wrap={true}
             />
           </div>
         </div>

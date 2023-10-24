@@ -6,6 +6,9 @@ const initialState = {
   //   open: false,
   //   settingsOpen: true,
   settingsOpen: false,
+  keyListener: {},
+  lastNotebookSelected: null,
+  lastNotebookSelectedState: false,
   defaultConn:
     localStorage.getItem('defaultConn') ??
     '{"id":"init","name":"localhost","url":"http://localhost:58090/fluree","type":"instance"}',

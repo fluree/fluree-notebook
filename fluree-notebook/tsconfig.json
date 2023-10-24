@@ -20,7 +20,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"],
+  "include": ["src", "flureedb"],
   "references": [{ "path": "./tsconfig.node.json" }],
   "allowJs": true
 }

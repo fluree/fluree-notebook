@@ -6,6 +6,8 @@ const IconButton = ({
   size = 'md',
   onClick,
   actionRef,
+  distance,
+  position,
   children,
 }: {
   tooltip?: string;
@@ -13,10 +15,14 @@ const IconButton = ({
   size?: 'sm' | 'md' | 'lg' | 'xl';
   children: JSX.Element;
   actionRef?: any;
+  distance?: number;
+  position?: 'top' | 'bottom' | 'left' | 'right';
   onClick?: (element: React.MouseEvent<HTMLElement>) => void;
 }) => {
   const getPadding = () => {
     switch (size) {
+      case 'sm':
+        return 'p-[4px]';
       case 'md':
         return 'p-[6px]';
       case 'lg':
@@ -33,7 +39,7 @@ const IconButton = ({
         data-tooltip={tooltip}
         onClick={onClick}
         className={`${className} relative rounded-full hover:bg-ui-main-400 dark:hover:bg-ui-neutral-800 
-            cursor-pointer ${getPadding()} bg-opacity-20 flex items-center justify-center ${
+            cursor-pointer ${getPadding()} bg-opacity-50 dark:bg-opacity-50 hover:bg-opacity-50 dark:hover:bg-opacity-50 flex items-center justify-center ${
           size ? `icon-button-${size}` : 'icon-button-md'
         } transition`}
       >
@@ -42,13 +48,19 @@ const IconButton = ({
     );
   }
   return (
-    <Tooltip animation="none" title={tooltip}>
+    <Tooltip
+      animation="none"
+      title={tooltip}
+      size={size === 'sm' ? 'small' : 'regular'}
+      position={position ? position : 'top'}
+      distance={distance ? distance : '10'}
+    >
       <span
         ref={actionRef}
         data-tooltip={tooltip}
         onClick={onClick}
         className={`${className} relative rounded-full hover:bg-ui-main-400 dark:hover:bg-ui-neutral-800 
-    cursor-pointer ${getPadding()} bg-opacity-20 flex items-center justify-center ${
+    cursor-pointer ${getPadding()} bg-opacity-50 dark:bg-opacity-50 hover:bg-opacity-50 dark:hover:bg-opacity-50 flex items-center justify-center ${
           size ? `icon-button-${size}` : 'icon-button-md'
         } transition`}
       >

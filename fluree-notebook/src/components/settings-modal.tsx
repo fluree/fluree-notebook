@@ -10,6 +10,7 @@ import useGlobal from '../hooks/useGlobal';
 import { Cube } from './icons/cube';
 import { Cloud } from './icons/cloud';
 import ConnectionMenu from './conn-menu';
+import { Globe } from './icons/globe';
 
 export default function SettingsModal() {
   const {
@@ -30,7 +31,8 @@ export default function SettingsModal() {
     <Transition.Root show={settingsOpen} as={Fragment}>
       <Dialog
         as="div"
-        className="relative z-[1000]"
+        style={{ zIndex: 150000 }}
+        className="relative"
         initialFocus={cancelButtonRef}
         onClose={closeSettings}
       >
@@ -58,14 +60,14 @@ export default function SettingsModal() {
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
               <Dialog.Panel className="relative block transform rounded-lg bg-white dark:bg-ui-neutral-900 p-4 text-left shadow-xl transition-all w-[80vw] outline outline-ui-main-500">
-                <div className="h-[calc(100%-65px)] p-3">
+                <div className="h-[calc(100%-65px)] p-2">
                   <div className="mt-1 block text-left">
                     <Dialog.Title
                       as="h2"
-                      className="text-3xl font-semibold leading-6 text-gray-900 dark:text-ui-neutral-300 mb-6 py-2"
+                      className="text-2xl font-semibold leading-6 text-gray-900 dark:text-ui-neutral-300 mb-6 py-2"
                     >
                       Connections
-                      <div className="absolute right-3 top-3 rounded-full bg-ui-neutral-300 bg-opacity-5">
+                      <div className="absolute right-3 top-4 rounded-full bg-ui-neutral-300 bg-opacity-5">
                         <IconButton onClick={closeSettings} size="lg">
                           <XMark />
                         </IconButton>
@@ -88,13 +90,49 @@ export default function SettingsModal() {
                         Nexus Datasets
                       </h4>
                       <DatasetsGrid />
+                      <h4 className="mt-5 dark:text-[snow] font-semibold text-lg flex items-center">
+                        <Globe
+                          className={`mr-2 h-6 w-6 dark:text-ui-green-500 text-ui-green-500`}
+                          aria-hidden="true"
+                        />
+                        In-Memory Fluree
+                      </h4>
+                      <div className="dark:text-[snow] py-2 px-1 text-[16px]">
+                        <div className="py-1">
+                          Running Fluree in-memory uses the browser to run a
+                          single transient ledger. Note that when using
+                          in-memory Fluree:
+                        </div>
+                        <ul className="dark:text-[snow] list-disc ml-5">
+                          <li>There is only one ledger</li>
+                          <li>Nothing is written to disk</li>
+                          <li>
+                            The ledger state is lost when the browser page is
+                            refreshed or closed
+                          </li>
+                          <li>
+                            Ledger keys such as{' '}
+                            <span className="font-mono inline-flex items-center justify-center dark:bg-gray-700 px-[3px] py-[1px] rounded-md text-[14px]">
+                              f:ledger
+                            </span>{' '}
+                            and{' '}
+                            <span className="font-mono inline-flex items-center justify-center dark:bg-gray-700 px-[3px] py-[1px] rounded-md text-[14px]">
+                              from
+                            </span>{' '}
+                            are omitted from transactions/queries
+                          </li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div className="dark:text-[white] py-3 px-6 z-[1000] flex items-center">
+                <div
+                  style={{ zIndex: 150000 }}
+                  className="dark:text-[white] py-3 px-6 flex items-center"
+                >
                   For new notebooks, use:
-                  <ConnectionMenu activeConnId={conn.id}>
-                    <div className="flex items-center px-4 py-2 ml-3 pl-[13px] rounded-md dark:hover:bg-gray-500 hover:bg-gray-200 bg-opacity-10 dark:bg-opacity-10 transition">
+                  <ConnectionMenu activeConnId={conn.id} position="above">
+                    <div className="flex items-center ml-3 px-4 py-2 pl-[13px] rounded-md dark:hover:bg-gray-500 hover:bg-gray-200 bg-opacity-10 dark:bg-opacity-10 transition">
                       {conn.type === 'instance' && (
                         <Cube
                           className={`mr-[6px] -ml-[2px] -mb-[1px] h-5 w-5 dark:text-ui-yellow-400 text-ui-yellow-400 delay-200 transition 
@@ -104,12 +142,19 @@ export default function SettingsModal() {
                       )}
                       {conn.type === 'dataset' && (
                         <Cloud
-                          className={`mr-[6px] -ml-[2px] -mb-[1px] h-5 w-5 dark:text-ui-main-500 text-ui-main-500 delay-200 transition 
+                          className={`mr-[6px] -mb-[1px] h-5 w-5 dark:text-ui-main-500 text-ui-main-500 delay-200 transition 
                         `}
                           aria-hidden="true"
                         />
                       )}
-                      <span className="-mb-[3px]">{conn.name}</span>
+                      {conn.type === 'memory' && (
+                        <Globe
+                          className={`mr-[6px] -ml-[2px] -mb-[1px] h-5 w-5 dark:text-ui-green-500 text-ui-green-500 delay-200 transition 
+                        `}
+                          aria-hidden="true"
+                        />
+                      )}
+                      <span className="-mr-1">{conn.name}</span>
                     </div>
                   </ConnectionMenu>
                 </div>
@@ -118,7 +163,7 @@ export default function SettingsModal() {
                   <button
                     type="button"
                     className={`bg-ui-main-300 hover:bg-ui-main-400 dark:bg-ui-main-600 dark:hover:bg-ui-main-500
-                     dark:text-[snow] rounded-md px-8 py-3 transition mx-4 -mt-4 mb-4 text-xl`}
+                     dark:text-[snow] rounded-md px-5 py-2 transition mx-4 -mt-4 mb-4 text-lg`}
                     onClick={closeSettings}
                   >
                     Close
