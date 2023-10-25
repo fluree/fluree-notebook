@@ -1,25 +1,12 @@
-import { Fragment, useState, useEffect } from 'react';
+import { Fragment } from 'react';
 import { Menu, Transition } from '@headlessui/react';
-import { Cube } from './icons/cube';
-import { Cloud } from './icons/cloud';
-import { Connections } from './icons/connections';
-import useGlobal from '../hooks/useGlobal';
-import { Check } from './icons/check';
-import { CheckCircle } from './icons/checkCircle';
-import { Globe } from './icons/globe';
-import { Info } from './icons/info';
-import { ExclamationCircle } from './icons/exclamationCircle';
+import { Notebook } from '../types';
+
 import { Caution } from './icons/caution';
+import { CheckCircle } from './icons/checkCircle';
+import { ExclamationCircle } from './icons/exclamationCircle';
+import { Info } from './icons/info';
 import { LightBulb } from './icons/lightBulb';
-
-function classNames(...classes) {
-  return classes.filter(Boolean).join(' ');
-}
-
-type Notebook = {
-  id: string;
-  name: string;
-};
 
 const AdmonitionMenu = ({
   cellIndex,
@@ -37,17 +24,12 @@ const AdmonitionMenu = ({
   const classes =
     'dark:bg-ui-neutral-900 text-gray-700 dark:text-[rgb(220,220,220)]';
 
-  const {
-    state: { settingsOpen },
-    dispatch,
-  } = useGlobal();
-
   const handleClick = (newAdmonitionType: string) => {
     updateCellAdmonition(newAdmonitionType);
   };
 
   const updateCellAdmonition = (newAdmonitionType: string) => {
-    let localState = JSON.parse(localStorage.getItem('notebookState') || '');
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
     let activeNotebookId = localState.activeNotebookId;
     let activeNotebookIndex = localState.notebooks.findIndex(
       (obj: Notebook) => obj.id === activeNotebookId
@@ -93,10 +75,9 @@ const AdmonitionMenu = ({
               {({ active }) => (
                 <span
                   onClick={() => handleClick('note')}
-                  className={classNames(
-                    active ? activeClasses : classes,
-                    'group flex items-center px-4 py-2 text-sm'
-                  )}
+                  className={`${
+                    active ? activeClasses : classes
+                  } group flex items-center px-4 py-2 text-sm`}
                 >
                   <Info
                     className="mr-3 h-5 w-5 dark:text-ui-neutral-400 text-ui-neutral-400"
@@ -115,10 +96,9 @@ const AdmonitionMenu = ({
               {({ active }) => (
                 <span
                   onClick={() => handleClick('info')}
-                  className={classNames(
-                    active ? activeClasses : classes,
-                    'group flex items-center px-4 py-2 text-sm'
-                  )}
+                  className={`${
+                    active ? activeClasses : classes
+                  } group flex items-center px-4 py-2 text-sm`}
                 >
                   <ExclamationCircle
                     className="mr-3 h-5 w-5 dark:text-ui-main-500 text-ui-main-500"
@@ -137,10 +117,9 @@ const AdmonitionMenu = ({
               {({ active }) => (
                 <span
                   onClick={() => handleClick('tip')}
-                  className={classNames(
-                    active ? activeClasses : classes,
-                    'group flex items-center px-4 py-2 text-sm'
-                  )}
+                  className={`${
+                    active ? activeClasses : classes
+                  } group flex items-center px-4 py-2 text-sm`}
                 >
                   <LightBulb
                     className="mr-3 h-5 w-5 dark:text-ui-green-400 text-ui-green-400"
@@ -159,10 +138,9 @@ const AdmonitionMenu = ({
               {({ active }) => (
                 <span
                   onClick={() => handleClick('caution')}
-                  className={classNames(
-                    active ? activeClasses : classes,
-                    'group flex items-center px-4 py-2 text-sm'
-                  )}
+                  className={`${
+                    active ? activeClasses : classes
+                  } group flex items-center px-4 py-2 text-sm`}
                 >
                   <Caution
                     className="mr-3 h-5 w-5 dark:text-ui-yellow-400 text-ui-yellow-400"

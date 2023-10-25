@@ -1,10 +1,11 @@
-export const DotsVerticalSolid = () => (
+export const DotsVerticalSolid = ({ className }: { className?: string }) => (
   <svg
     width={17}
     height={17}
     viewBox="0 0 19 17"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
+    className={className ? className : 'w-6 h-6'}
   >
     <g clipPath="url(#clip0_821_23509)">
       <path

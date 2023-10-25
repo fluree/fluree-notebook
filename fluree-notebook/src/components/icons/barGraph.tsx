@@ -1,4 +1,4 @@
-export const BarGraph = () => (
+export const BarGraph = ({ className }: { className?: string }) => (
   <svg
     style={{}}
     width="25"
@@ -6,6 +6,7 @@ export const BarGraph = () => (
     viewBox="0 0 22 21"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
+    className={className ? className : 'w-6 h-6'}
   >
     <path
       fillRule="evenodd"

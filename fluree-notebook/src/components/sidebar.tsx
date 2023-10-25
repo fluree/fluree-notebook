@@ -1,48 +1,39 @@
-import { useState, useEffect } from 'react';
-import { BarGraph } from './icons/barGraph';
-import { SidebarItem } from './sidebar-item';
-import { SelectMultiple } from './icons/selectMultiple';
+import { useState, useEffect, BaseSyntheticEvent } from 'react';
+
+import { Notebook } from '../types';
+import SidebarItem from './sidebar-item';
 import IconButton from './buttons/icon-button';
+
 import { AddEllipse } from './icons/addEllipse';
-import { XMark } from './icons/x-mark';
-import { CodeBracket } from './icons/code-bracket';
+import { BarGraph } from './icons/barGraph';
 import { Check } from './icons/check';
+import { CodeBracket } from './icons/code-bracket';
 import { Delete } from './icons/delete';
-import { Upload } from './icons/upload';
 import { Markdown } from './icons/markdown';
+import { SelectMultiple } from './icons/selectMultiple';
+import { Upload } from './icons/upload';
+import { XMark } from './icons/x-mark';
 
-type Notebook = {
-  id: string;
-  name: string;
-};
-
-type SelectedNotebook = {
-  id: string;
-  index: number;
-};
-
-export const Sidebar = ({
+const Sidebar = ({
   notebooks,
   selectedNotebook,
   onSelectNotebook,
   addNotebook,
   addNotebooks,
-  markdownToJson,
   importMarkdown,
 }: {
   notebooks: Notebook[];
   selectedNotebook: string;
-  onSelectNotebook: (id: string) => void;
+  onSelectNotebook: (e: any, id: string) => void;
   addNotebook: () => void;
-  addNotebooks: (arr: Array<string>) => void;
-  markdownToJson: (markdown: string) => void;
-  importMarkdown: (id: string) => void;
+  addNotebooks: (arr: ArrayBuffer | string | null) => void;
+  importMarkdown: (arr: ArrayBuffer | string | null) => void;
 }): JSX.Element => {
   const [dragging, setDragging] = useState<boolean>(false);
   const [selecting, setSelecting] = useState<boolean>(false);
-  const [selectedNotebooks, setSelectedNotebooks] = useState<
-    Array<SelectedNotebook>
-  >([]);
+  const [selectedNotebooks, setSelectedNotebooks] = useState<Array<Notebook>>(
+    []
+  );
   const [allSelected, setAllSelected] = useState(false);
 
   useEffect(() => {
@@ -60,7 +51,7 @@ export const Sidebar = ({
   };
 
   const deleteNotebook = (id: string) => {
-    let localState = JSON.parse(localStorage.getItem('notebookState') || '');
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
     const filteredNotebooks = localState.notebooks.filter(
       (notebook: any) => notebook.id !== id
     );
@@ -73,8 +64,8 @@ export const Sidebar = ({
   };
 
   const deleteSelected = () => {
-    let selectedIds = selectedNotebooks.map((p: SelectedNotebook) => p.id);
-    let localState = JSON.parse(localStorage.getItem('notebookState') || '');
+    let selectedIds = selectedNotebooks.map((p: Notebook) => p.id);
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
     const filteredNotebooks = localState.notebooks.filter(
       (notebook: Notebook) => selectedIds.indexOf(notebook.id) === -1
     );
@@ -88,17 +79,17 @@ export const Sidebar = ({
   };
 
   const exportSelectedJSON = () => {
-    let idsToExport = selectedNotebooks.map((p: SelectedNotebook) => p.id);
+    let idsToExport = selectedNotebooks.map((p: Notebook) => p.id);
     exportJSON(idsToExport);
   };
 
   const exportSelectedMarkdown = () => {
-    let idsToExport = selectedNotebooks.map((p: SelectedNotebook) => p.id);
+    let idsToExport = selectedNotebooks.map((p: Notebook) => p.id);
     exportMarkdown(idsToExport);
   };
 
   const exportMarkdown = (idArray: Array<string>) => {
-    let localState = JSON.parse(localStorage.getItem('notebookState') || '');
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
     for (var m = 0; m < idArray.length; m++) {
       let activeNotebook = localState.notebooks.find(
         (obj: Notebook) => obj.id === idArray[m]
@@ -153,7 +144,7 @@ export const Sidebar = ({
   };
 
   const exportJSON = (idArray: Array<string>) => {
-    let localState = JSON.parse(localStorage.getItem('notebookState') || '');
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
     let notebooksToExport = [];
     let fileName = 'notebooksExport';
 
@@ -205,7 +196,7 @@ export const Sidebar = ({
   };
 
   const selectAllNotebooks = () => {
-    let localState = JSON.parse(localStorage.getItem('notebookState') || '');
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
     let notebooks = localState.notebooks;
     let reducedVals = notebooks.map((p: Notebook, i: number) => ({
       id: p.id,
@@ -214,27 +205,25 @@ export const Sidebar = ({
     setSelectedNotebooks(reducedVals);
   };
 
-  const handleUploadJSON = (e) => {
+  const handleUploadJSON = (e: BaseSyntheticEvent) => {
+    console.log(e);
     for (var i = 0; i < e.target.files.length; i++) {
-      //   let reader = new FileReader();
-      //   reader.onload = function (event) {
-      //     addNotebooks(event.target.result);
-      //     console.log(event.target.result);
-      //   };
-      //   reader.readAsText(e.target.files[i]);
-      // }
       let thisFile = e.target.files[i];
       if (thisFile.type === 'application/json') {
         let reader = new FileReader();
         reader.onload = function (event) {
-          addNotebooks(event.target.result);
+          if (event.target) {
+            addNotebooks(event.target.result);
+          }
         };
         reader.readAsText(thisFile);
       } else if (thisFile.type === 'text/markdown') {
         let reader = new FileReader();
         reader.onload = function (event) {
-          importMarkdown(event.target.result);
-          console.log(event.target.result);
+          if (event.target) {
+            importMarkdown(event.target.result);
+            console.log(event.target.result);
+          }
         };
         reader.readAsText(thisFile);
       }
@@ -270,12 +259,12 @@ export const Sidebar = ({
             {!selecting && (
               <>
                 <input
-                  type="file"
                   id="json-upload"
-                  multiple="multiple"
-                  accept=".md,.mdx,.json"
                   className="hidden"
                   onChange={handleUploadJSON}
+                  type="file"
+                  accept=".md,.mdx,.json"
+                  multiple
                 />
                 <label htmlFor="json-upload">
                   <IconButton
@@ -320,7 +309,6 @@ export const Sidebar = ({
                   : 'bg-ui-main-100 dark:bg-ui-main-900 hover:bg-ui-main-200 dark:hover:bg-ui-main-800'
               }
               text={notebook.name}
-              dragging={dragging}
               setDragging={setDragging}
               index={index}
               selecting={selecting}
@@ -424,3 +412,5 @@ export const Sidebar = ({
     </div>
   );
 };
+
+export default Sidebar;

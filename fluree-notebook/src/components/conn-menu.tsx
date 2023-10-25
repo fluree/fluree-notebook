@@ -1,16 +1,13 @@
 import { Fragment, useState, useEffect } from 'react';
 import { Menu, Transition } from '@headlessui/react';
+import useGlobal from '../hooks/useGlobal';
+import { Conn, Notebook } from '../types';
+
 import { Cube } from './icons/cube';
 import { Cloud } from './icons/cloud';
 import { Connections } from './icons/connections';
-import useGlobal from '../hooks/useGlobal';
-import { Check } from './icons/check';
 import { CheckCircle } from './icons/checkCircle';
 import { Globe } from './icons/globe';
-
-function classNames(...classes) {
-  return classes.filter(Boolean).join(' ');
-}
 
 const ConnectionMenu = ({
   cellIndex,
@@ -24,10 +21,10 @@ const ConnectionMenu = ({
   activeConnId: string;
 }) => {
   const [instances, setInstances] = useState(
-    JSON.parse(localStorage.getItem('instances'))
+    JSON.parse(localStorage.getItem('instances') || '[]')
   );
   const [datasets, setDatasets] = useState(
-    JSON.parse(localStorage.getItem('datasets'))
+    JSON.parse(localStorage.getItem('datasets') || '[]')
   );
   const activeClasses =
     'cursor-pointer dark:bg-ui-neutral-800 bg-gray-100 text-gray-900 dark:text-white';
@@ -50,8 +47,8 @@ const ConnectionMenu = ({
     dispatch({ type: 'defaultConn', value: val });
 
   const getLocalStorage = () => {
-    setInstances(JSON.parse(localStorage.getItem('instances')));
-    setDatasets(JSON.parse(localStorage.getItem('datasets')));
+    setInstances(JSON.parse(localStorage.getItem('instances') || '[]'));
+    setDatasets(JSON.parse(localStorage.getItem('datasets') || '[]'));
   };
 
   useEffect(() => {
@@ -61,9 +58,9 @@ const ConnectionMenu = ({
     };
   }, []);
 
-  const handleClick = (conn: string) => {
-    if (cellIndex > -1) {
-      updateCellConnection(conn);
+  const handleClick = (conn: Conn) => {
+    if (cellIndex && cellIndex > -1) {
+      updateCellConnection(conn, cellIndex);
     } else {
       updateDefaultConnection(conn);
     }
@@ -75,22 +72,22 @@ const ConnectionMenu = ({
     setDefaultConn(newConn);
   };
 
-  const updateCellConnection = (conn: object) => {
+  const updateCellConnection = (conn: Conn, ind: number) => {
     // if none if the cells have conn specified, AND
     // none of the cells have resultStatus of "success",
     // then set default notebook conn
 
     let newConn = JSON.stringify(conn);
-    let localState = JSON.parse(localStorage.getItem('notebookState'));
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
     let activeNotebookId = localState.activeNotebookId;
     let activeNotebookIndex = localState.notebooks.findIndex(
-      (obj: object) => obj.id === activeNotebookId
+      (obj: Notebook) => obj.id === activeNotebookId
     );
     let activeNotebook = localState.notebooks.find(
-      (obj) => obj.id === activeNotebookId
+      (obj: Notebook) => obj.id === activeNotebookId
     );
 
-    activeNotebook.cells[cellIndex].conn = newConn;
+    activeNotebook.cells[ind].conn = newConn;
 
     // if all cells are same, update notebook default
     const seen = new Set();
@@ -117,7 +114,7 @@ const ConnectionMenu = ({
       as="div"
       className="relative inline-flex items-center justify-center font-mono"
     >
-      <Menu.Button className="inline-flex justify-center items-center rounded-md">
+      <Menu.Button className="inline-flex justify-center items-center rounded-md px-3 py-2 -mx-3 -my-2">
         {children}
       </Menu.Button>
 
@@ -139,15 +136,14 @@ const ConnectionMenu = ({
         >
           {instances.length > 0 && (
             <div className="py-1">
-              {instances.map((p, i) => (
+              {instances.map((p: Conn, i: number) => (
                 <Menu.Item key={i}>
                   {({ active }) => (
                     <span
                       onClick={() => handleClick(p)}
-                      className={classNames(
-                        active ? activeClasses : classes,
-                        'group flex items-center px-4 py-2 text-sm'
-                      )}
+                      className={`${
+                        active ? activeClasses : classes
+                      } group flex items-center px-4 py-2 text-sm`}
                     >
                       <Cube
                         className="mr-3 h-5 w-5 dark:text-ui-yellow-400 text-ui-yellow-400"
@@ -168,15 +164,14 @@ const ConnectionMenu = ({
 
           {datasets.length > 0 && (
             <div className="py-1">
-              {datasets.map((p, i) => (
+              {datasets.map((p: Conn, i: number) => (
                 <Menu.Item key={i}>
                   {({ active }) => (
                     <span
                       onClick={() => handleClick(p)}
-                      className={classNames(
-                        active ? activeClasses : classes,
-                        'group flex items-center px-4 py-2 text-sm'
-                      )}
+                      className={`${
+                        active ? activeClasses : classes
+                      } group flex items-center px-4 py-2 text-sm`}
                     >
                       <Cloud
                         className="mr-3 h-5 w-5 dark:text-ui-main-500 text-ui-main-500"
@@ -200,10 +195,9 @@ const ConnectionMenu = ({
               {({ active }) => (
                 <span
                   onClick={() => handleClick(inMemoryObj)}
-                  className={classNames(
-                    active ? activeClasses : classes,
-                    'group flex items-center px-4 py-2 text-sm'
-                  )}
+                  className={`${
+                    active ? activeClasses : classes
+                  } group flex items-center px-4 py-2 text-sm`}
                 >
                   <Globe
                     className="mr-3 h-5 w-5  dark:text-ui-green-500 text-ui-green-500"
@@ -226,10 +220,9 @@ const ConnectionMenu = ({
                 {({ active }) => (
                   <span
                     onClick={openSettings}
-                    className={classNames(
-                      active ? activeClasses : classes,
-                      'group flex items-center px-4 py-2 text-sm'
-                    )}
+                    className={`${
+                      active ? activeClasses : classes
+                    } group flex items-center px-4 py-2 text-sm`}
                   >
                     <Connections
                       className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"

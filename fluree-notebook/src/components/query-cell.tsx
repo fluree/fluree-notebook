@@ -1,45 +1,37 @@
-import { useState, useRef, useEffect } from 'react';
-import MonacoCell from '../monaco-cell';
-
-import { RunButton } from './buttons/run';
-import { Plus } from './icons/plus';
-import { Bolt } from './icons/bolt';
-import { Search } from './icons/search';
-import { Sparkles } from './icons/sparkles';
-import { Clipboard } from './icons/clipboard';
-import { DocumentUp } from './icons/document-up';
-import { DocumentDown } from './icons/document-down';
-import { Duplicate } from './icons/duplicate';
-import { Bars2 } from './icons/bars-2';
-import { Handle } from './icons/handle';
-import { Delete } from './icons/delete';
-import { Cloud } from './icons/cloud';
-import { Cube } from './icons/cube';
-import IconButton from './buttons/icon-button';
-
+import { useState, useRef, useEffect, KeyboardEvent } from 'react';
+import axios from 'axios';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-import axios from 'axios';
+import AddCellMenu from './add-cell-menu';
+import ConnectionMenu from './conn-menu';
+import IconButton from './buttons/icon-button';
+import MonacoCell from '../monaco-cell';
+
+import useGlobal from '../hooks/useGlobal';
+import { Conn, Notebook } from '../types';
+
+import { ArrowUturnLeft } from './icons/arrowUturnLeft';
 import { ArrowUp } from './icons/arrowUp';
 import { ArrowDown } from './icons/arrowDown';
-import { ArrowLeft } from './icons/arrowLeft';
-import { ArrowRight } from './icons/arrowRight';
-
-import { AddCellList } from './add-cell-list';
-import AddCellMenu from './add-cell-menu';
-import { Sparql } from './icons/sparql';
-import { Wave1 } from './icons/wave1';
-import { ArrowUturnLeft } from './icons/arrowUturnLeft';
-import ConnectionMenu from './conn-menu';
-import useGlobal from '../hooks/useGlobal';
+import { Bolt } from './icons/bolt';
 import { Check } from './icons/check';
+import { Clipboard } from './icons/clipboard';
+import { Cloud } from './icons/cloud';
+import { Cube } from './icons/cube';
+import { Delete } from './icons/delete';
+import { DocumentDown } from './icons/document-down';
+import { DocumentUp } from './icons/document-up';
+import { Duplicate } from './icons/duplicate';
 import { Globe } from './icons/globe';
+import { Plus } from './icons/plus';
+import { Search } from './icons/search';
+import { Sparkles } from './icons/sparkles';
 
 export interface IQueryProps {}
 
-export const QueryCell = ({
+const QueryCell = ({
   id,
   value,
   result,
@@ -61,21 +53,26 @@ export const QueryCell = ({
   id: string;
   value: string;
   result?: string;
-  resultStatus?: string;
+  resultStatus?: 'success' | 'error' | 'warn' | null;
   revert?: string;
   index: number;
   language: 'sparql' | 'json';
-  defaultConn?: string;
+  defaultConn: string;
   conn?: string;
-  addCell: (value: 'Markdown' | 'SPARQL' | 'FLUREEQL', index?: number) => void;
-  moveCell: (direction: string, index: number) => void;
+  addCell: (
+    cellType: 'Markdown' | 'Mermaid' | 'SPARQL' | 'FLUREEQL' | 'Admonition',
+    defaultLedger: string,
+    conn?: string,
+    index?: number
+  ) => void;
+  moveCell: (direction: 'up' | 'down', index: number) => void;
   duplicateCell: (index: number) => void;
   deleteCell: (index: number) => void;
   clearResult: (index: number) => void;
   onClick?: (element: React.MouseEvent<HTMLElement>) => void;
   onChange: (value: string) => void;
-  memTransact: (val: any) => void;
-  memQuery: (val: any) => void;
+  memTransact: (val: string, setter: any) => void;
+  memQuery: (val: string, setter: any) => void;
 }): JSX.Element => {
   const [resultState, setResultState] = useState<string | null>(
     result ? JSON.parse(result) : null
@@ -90,11 +87,11 @@ export const QueryCell = ({
   const [defaultAction, setDefaultAction] = useState<
     'query' | 'transact' | 'create' | null
   >(null);
-  const monacoRef = useRef();
-  const resultRef = useRef();
-  const editorRef = useRef();
-  const actionRef = useRef();
-  const formatRef = useRef();
+  const monacoRef = useRef<any>();
+  const resultRef = useRef<any>();
+  const editorRef = useRef<any>();
+  const actionRef = useRef<HTMLSpanElement>();
+  const formatRef = useRef<HTMLSpanElement>();
 
   axios.defaults.baseURL = 'http://localhost:58090/fluree';
 
@@ -190,7 +187,7 @@ export const QueryCell = ({
     }
   }, [value, connState]);
 
-  const doDefaultAction = (e) => {
+  const doDefaultAction = (e: KeyboardEvent) => {
     switch (e.code) {
       case 'F9':
         e.preventDefault();
@@ -208,34 +205,52 @@ export const QueryCell = ({
         break;
       case 'F8':
         e.preventDefault();
-        formatRef.current.click();
+        (formatRef.current as HTMLSpanElement).click();
     }
   };
 
-  function jsonToMermaid(data) {
+  interface NodeItem {
+    [key: string]: any;
+    id?: string;
+    '@id'?: string;
+    name?: string;
+  }
+
+  function jsonToMermaid(data: NodeItem): string {
     let mermaidString = 'graph LR\n';
-    const createdNodes = new Set();
-    const createdEdges = new Set();
-    const createdAttributes = new Set();
+    const createdNodes = new Set<string>();
+    const createdEdges = new Set<string>();
+    const createdAttributes = new Set<string>();
 
-    const createNodeId = (id) => id.replace(/[:/#.]/g, '');
+    const createNodeId = (id: string): string => id.replace(/[:/#.]/g, '');
 
-    const createEdgeId = (source, target, label) =>
-      `${source}-${target}-${label}`;
+    const createEdgeId = (
+      source: string,
+      target: string,
+      label: string
+    ): string => `${source}-${target}-${label}`;
 
-    const createAttributeId = (nodeId, attribute, value) =>
-      `${nodeId}-${attribute}-${value}`;
+    const createAttributeId = (
+      nodeId: string,
+      attribute: string,
+      value: any
+    ): string => `${nodeId}-${attribute}-${value}`;
 
-    const getIdFromItem = (item) => item['id'] || item['@id'];
+    const getIdFromItem = (item: NodeItem): string | undefined =>
+      item['id'] || item['@id'];
 
-    const processNode = (item, parentId = null, edgeLabel = '') => {
+    const processNode = (
+      item: any,
+      parentId: string | null = null,
+      edgeLabel: string = ''
+    ): void => {
       if (item === null || item === undefined) return;
 
       if (Array.isArray(item)) {
         item.forEach((subItem) => processNode(subItem, parentId, edgeLabel));
       } else if (typeof item === 'object' && item !== null) {
         const nodeId = getIdFromItem(item)
-          ? createNodeId(getIdFromItem(item))
+          ? createNodeId(getIdFromItem(item) as string)
           : createNodeId(Math.random().toString(36).substr(2, 9));
 
         if (!createdNodes.has(nodeId)) {
@@ -262,7 +277,11 @@ export const QueryCell = ({
         const valueNodeId = createNodeId(
           Math.random().toString(36).substr(2, 9)
         );
-        const attributeId = createAttributeId(parentId, edgeLabel, item);
+        const attributeId = createAttributeId(
+          parentId as string,
+          edgeLabel,
+          item
+        );
 
         if (!createdAttributes.has(attributeId)) {
           createdAttributes.add(attributeId);
@@ -271,10 +290,7 @@ export const QueryCell = ({
       }
     };
 
-    data.forEach((item) => {
-      processNode(item);
-    });
-
+    processNode(data);
     return mermaidString;
   }
 
@@ -311,7 +327,7 @@ export const QueryCell = ({
           setResultState(returnedValue);
         });
     } else {
-      let headers = {
+      let headers: any = {
         'Content-Type': 'application/json',
       };
 
@@ -375,8 +391,10 @@ export const QueryCell = ({
   }, [resultState, resultStatusState]);
 
   const revertResult = () => {
-    setResultState(JSON.parse(revert));
-    setResultStatusState('success');
+    if (revert) {
+      setResultState(JSON.parse(revert));
+      setResultStatusState('success');
+    }
   };
 
   useEffect(() => {
@@ -387,7 +405,10 @@ export const QueryCell = ({
           let val = JSON.parse(value);
           let newConn = JSON.parse(conn);
           if (newConn.type === 'dataset') {
-            if (['transact', 'create'].includes(defaultAction)) {
+            if (
+              defaultAction &&
+              ['transact', 'create'].includes(defaultAction)
+            ) {
               if (val['f:ledger']) {
                 val['f:ledger'] = newConn.name;
               } else if (val.ledger) {
@@ -410,13 +431,13 @@ export const QueryCell = ({
   }, [conn]);
 
   const updateStoredResult = () => {
-    let localState = JSON.parse(localStorage.getItem('notebookState'));
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
     let activeNotebookId = localState.activeNotebookId;
     let activeNotebookIndex = localState.notebooks.findIndex(
-      (obj) => obj.id === activeNotebookId
+      (obj: Notebook) => obj.id === activeNotebookId
     );
     let activeNotebook = localState.notebooks.find(
-      (obj) => obj.id === activeNotebookId
+      (obj: Notebook) => obj.id === activeNotebookId
     );
     activeNotebook.cells[index].result = JSON.stringify(resultState);
     activeNotebook.cells[index].resultStatus = resultStatusState;
@@ -426,7 +447,7 @@ export const QueryCell = ({
       // doesn't work for SPARQL...
       if (language === 'json') {
         let val = JSON.parse(value);
-        if (['transact', 'create'].includes(defaultAction)) {
+        if (defaultAction && ['transact', 'create'].includes(defaultAction)) {
           if (val['f:ledger']) {
             ledger = val['f:ledger'];
           } else if (val.ledger) {
@@ -498,15 +519,15 @@ export const QueryCell = ({
 
   const getDefaultLedger = () => {
     // get local storage
-    let localState = JSON.parse(localStorage.getItem('notebookState'));
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
 
     // get active notebook, index
     let activeNotebookId = localState.activeNotebookId;
     let activeNotebook = localState.notebooks.find(
-      (obj) => obj.id === activeNotebookId
+      (obj: Notebook) => obj.id === activeNotebookId
     );
 
-    let nbConn = '';
+    let nbConn: Conn;
     if (!defaultConn) {
       nbConn = JSON.parse(globalConn);
     } else {
@@ -521,7 +542,7 @@ export const QueryCell = ({
     return null;
   };
 
-  function formatSPARQL(query) {
+  function formatSPARQL(query: string) {
     const keywords = [
       'SELECT',
       'WHERE',
@@ -550,7 +571,7 @@ export const QueryCell = ({
     formattedQuery = formattedQuery.replace(whereRegex, (match, group) => {
       const lines = group
         .split('\n')
-        .map((line) => `  ${line.trim()}`)
+        .map((line: string) => `  ${line.trim()}`)
         .join('\n');
       return `WHERE {\n${lines}\n}`;
     });
@@ -574,12 +595,6 @@ export const QueryCell = ({
     formattedQuery = formattedQuery.replace(/\n\s*\n/g, '\n').trim();
     onChange(formattedQuery);
   }
-
-  const getZIndex = () => {
-    let str = `z-[${1000 - index}]`;
-    console.log(str);
-    return str;
-  };
 
   return (
     <div className="mb-6" id={id}>
@@ -669,7 +684,7 @@ export const QueryCell = ({
                 <Bolt />
               </IconButton>
 
-              {connState.type !== 'dataset' && (
+              {!['dataset', 'memory'].includes(connState.type) && (
                 <IconButton
                   actionRef={defaultAction === 'create' ? actionRef : null}
                   onClick={() => flureePost('create')}
@@ -920,3 +935,5 @@ export const QueryCell = ({
     </div>
   );
 };
+
+export default QueryCell;

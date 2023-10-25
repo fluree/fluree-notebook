@@ -1,18 +1,24 @@
-import { useState, useEffect, useRef } from 'react';
+import {
+  useState,
+  useEffect,
+  KeyboardEvent,
+  SetStateAction,
+  Dispatch,
+} from 'react';
 import useGlobal from './hooks/useGlobal';
 import Editor from '@monaco-editor/react';
 
 const MonacoCell: React.FC<{
   value: string;
   language: 'json' | 'sparql';
-  changeCallback?: (value: string | undefined, event: any) => void;
-  onKeyDown: () => void;
-  setFocused: (value: boolean) => void;
-  setHover: (value: boolean) => void;
   monacoRef: any;
-  editorRef: any;
-  readOnly: boolean;
-  wrap: boolean;
+  editorRef?: any;
+  readOnly?: boolean;
+  wrap?: boolean;
+  setHover: Dispatch<SetStateAction<boolean>>;
+  changeCallback?: (value: string | undefined, event: any) => void;
+  onKeyDown?: (e: KeyboardEvent) => void;
+  setFocused?: (value: boolean) => void;
 }> = ({
   value,
   language,
@@ -22,8 +28,8 @@ const MonacoCell: React.FC<{
   setHover,
   monacoRef,
   editorRef,
-  readOnly,
-  wrap,
+  readOnly = false,
+  wrap = false,
 }) => {
   const [height, setHeight] = useState(300);
 
@@ -95,15 +101,21 @@ const MonacoCell: React.FC<{
 
     if (editor && !readOnly) {
       editor.onDidFocusEditorWidget(() => {
-        setFocused(true);
+        if (setFocused) {
+          setFocused(true);
+        }
       });
 
       editor.onDidBlurEditorWidget(() => {
-        setFocused(false);
+        if (setFocused) {
+          setFocused(false);
+        }
       });
 
-      editor.onKeyDown((e) => {
-        onKeyDown(e);
+      editor.onKeyDown((e: KeyboardEvent) => {
+        if (onKeyDown) {
+          onKeyDown(e);
+        }
       });
     }
   }

@@ -1,13 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
+import React, { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import Editor from '@monaco-editor/react';
-import remarkGfm from 'remark-gfm';
-import $ from 'jquery';
+import initEditor from 'monaco-mermaid';
+
+import useGlobal from '../hooks/useGlobal';
+import { Conn, Notebook } from '../types';
 
 import IconButton from './buttons/icon-button';
-import { AddCellList } from './add-cell-list';
-import { Mermaid } from 'mdx-mermaid/Mermaid';
-import { mermaidTheme } from '../mermaidTheme';
+import AddCellMenu from './add-cell-menu';
 
 import { Check } from './icons/check';
 import { Delete } from './icons/delete';
@@ -17,12 +16,11 @@ import { Duplicate } from './icons/duplicate';
 import { DocumentUp } from './icons/document-up';
 import { DocumentDown } from './icons/document-down';
 import { Cancel } from './icons/cancel';
-import AddCellMenu from './add-cell-menu';
 
-import useGlobal from '../hooks/useGlobal';
-
-// import monacoMermaid from 'https://cdn.skypack.dev/monaco-mermaid';
-import initEditor from 'monaco-mermaid';
+// @ts-ignore
+import { Mermaid } from 'mdx-mermaid/Mermaid';
+// @ts-ignore
+import { mermaidTheme } from '../mermaidTheme';
 
 const MermaidCell: React.FC<{
   id: string;
@@ -30,8 +28,13 @@ const MermaidCell: React.FC<{
   index: number;
   defaultConn: string;
   titleCell?: boolean;
-  addCell: (value: 'Markdown' | 'SPARQL' | 'FLUREEQL', index?: number) => void;
-  moveCell: (direction: string, index: number) => void;
+  addCell: (
+    cellType: 'Markdown' | 'Mermaid' | 'SPARQL' | 'FLUREEQL' | 'Admonition',
+    defaultLedger: string,
+    conn?: string,
+    index?: number
+  ) => void;
+  moveCell: (direction: 'up' | 'down', index: number) => void;
   duplicateCell: (index: number) => void;
   deleteCell: (index: number) => void;
   onChange: (newValue: string) => void;
@@ -51,12 +54,12 @@ const MermaidCell: React.FC<{
   const [storedValue, setStoredValue] = useState<string>(value);
   const [focused, setFocused] = useState<boolean>(false);
   const [hover, setHover] = useState<boolean>(false);
-  const [cellBelowMenu, setCellBelowMenu] = useState(false);
-  const [cellAboveMenu, setCellAboveMenu] = useState(false);
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
-  const monacoRef = useRef();
-  const editorRef = useRef();
-  const actionRef = useRef();
+  const [theme, setTheme] = useState<string | null>(
+    localStorage.getItem('theme') || 'light'
+  );
+  const monacoRef = useRef<any>();
+  const editorRef = useRef<any>();
+  const actionRef = useRef<HTMLSpanElement>();
 
   const {
     state: { defaultConn: globalConn, theme: globalTheme },
@@ -67,13 +70,14 @@ const MermaidCell: React.FC<{
   }, [globalTheme]);
 
   const checkRender = () => {
+    // this function is a rather janky way of making sure the mermaid chart is rendered correctly on mount
     if (!isEditing) {
       let container = document.getElementById(id);
       let merm = container?.querySelector('.mermaid');
-      merm.removeAttribute('data-processed');
+      merm?.removeAttribute('data-processed');
       let childG = merm?.querySelectorAll('g');
-      if (childG.length === 0) {
-        merm.removeAttribute('data-processed');
+      if (childG?.length === 0) {
+        merm?.removeAttribute('data-processed');
       }
     }
     if (value.endsWith(' ')) {
@@ -81,7 +85,6 @@ const MermaidCell: React.FC<{
     } else {
       onChange(value + ' ');
     }
-    // console.log(childG);
   };
 
   useEffect(() => {
@@ -95,7 +98,7 @@ const MermaidCell: React.FC<{
       try {
         let container = document.getElementById(id);
         let merm = container?.querySelector('.mermaid');
-        merm.removeAttribute('data-processed');
+        merm?.removeAttribute('data-processed');
       } catch (e) {
         console.warn(
           `An error occurred when trying to re-render mermaid. [cell: ${id}]`
@@ -149,9 +152,9 @@ const MermaidCell: React.FC<{
         setFocused(false);
       });
 
-      editor.onKeyDown((e) => {
+      editor.onKeyDown((e: KeyboardEvent) => {
         if (e.code === 'F9') {
-          actionRef.current.click();
+          (actionRef.current as HTMLSpanElement).click();
         }
       });
     }
@@ -159,10 +162,10 @@ const MermaidCell: React.FC<{
   }
 
   useEffect(() => {
-    let localState = JSON.parse(localStorage.getItem('notebookState'));
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
     let activeNotebookId = localState.activeNotebookId;
     let activeNotebook = localState.notebooks.find(
-      (obj) => obj.id === activeNotebookId
+      (obj: Notebook) => obj.id === activeNotebookId
     );
     if (activeNotebook?.cells[index]?.editing === true) {
       setIsEditing(true);
@@ -171,21 +174,21 @@ const MermaidCell: React.FC<{
     }
   }, [id]);
 
-  const handleEditorChange = (value) => {
+  const handleEditorChange = (value: any) => {
     onChange(value);
   };
 
   const getDefaultLedger = () => {
     // get local storage
-    let localState = JSON.parse(localStorage.getItem('notebookState'));
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
 
     // get active notebook, index
     let activeNotebookId = localState.activeNotebookId;
     let activeNotebook = localState.notebooks.find(
-      (obj) => obj.id === activeNotebookId
+      (obj: Notebook) => obj.id === activeNotebookId
     );
 
-    let nbConn = '';
+    let nbConn: Conn;
     if (!defaultConn) {
       nbConn = JSON.parse(globalConn);
     } else {
@@ -204,13 +207,15 @@ const MermaidCell: React.FC<{
     // start editing
     if (!titleCell) {
       setIsEditing(true);
-      let localState = JSON.parse(localStorage.getItem('notebookState'));
+      let localState = JSON.parse(
+        localStorage.getItem('notebookState') || '[]'
+      );
       let activeNotebookId = localState.activeNotebookId;
       let activeNotebookIndex = localState.notebooks.findIndex(
-        (obj) => obj.id === activeNotebookId
+        (obj: Notebook) => obj.id === activeNotebookId
       );
       let activeNotebook = localState.notebooks.find(
-        (obj) => obj.id === activeNotebookId
+        (obj: Notebook) => obj.id === activeNotebookId
       );
       activeNotebook.cells[index].editing = true;
       localState.notebooks[activeNotebookIndex] = activeNotebook;
@@ -228,13 +233,13 @@ const MermaidCell: React.FC<{
   const stopEditing = () => {
     // stop editing
     setIsEditing(false);
-    let localState = JSON.parse(localStorage.getItem('notebookState'));
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
     let activeNotebookId = localState.activeNotebookId;
     let activeNotebookIndex = localState.notebooks.findIndex(
-      (obj) => obj.id === activeNotebookId
+      (obj: Notebook) => obj.id === activeNotebookId
     );
     let activeNotebook = localState.notebooks.find(
-      (obj) => obj.id === activeNotebookId
+      (obj: Notebook) => obj.id === activeNotebookId
     );
     activeNotebook.cells[index].editing = false;
     localState.notebooks[activeNotebookIndex] = activeNotebook;
@@ -261,12 +266,13 @@ const MermaidCell: React.FC<{
         <div
           id="monaco-toolbar"
           className={`bg-ui-main-300 dark:bg-ui-neutral-700 bg-opacity-20 dark:bg-opacity-20 px-3 py-[3px] rounded-t-md
-          backdrop-blur transition flex gap-1 z-10
+          backdrop-blur transition flex gap-1 
           ${
             focused || hover
               ? ''
               : 'dark:text-ui-neutral-500 text-ui-neutral-600'
           }`}
+          style={{ zIndex: 10000 - index }}
         >
           <IconButton
             onClick={stopEditing}
@@ -300,10 +306,7 @@ const MermaidCell: React.FC<{
             conn={defaultConn}
             defaultLedger={getDefaultLedger()}
           >
-            <IconButton
-              onClick={() => setCellAboveMenu(!cellAboveMenu)}
-              tooltip="Create Cell Above"
-            >
+            <IconButton tooltip="Create Cell Above">
               <DocumentUp />
             </IconButton>
           </AddCellMenu>

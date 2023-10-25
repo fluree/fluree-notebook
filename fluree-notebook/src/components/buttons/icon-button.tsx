@@ -53,6 +53,7 @@ const IconButton = ({
       title={tooltip}
       size={size === 'sm' ? 'small' : 'regular'}
       position={position ? position : 'top'}
+      // @ts-ignore
       distance={distance ? distance : '10'}
     >
       <span

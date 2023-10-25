@@ -4,31 +4,27 @@ import {
   useEffect,
   Dispatch,
   SetStateAction,
-  FocusEventHandler,
   FocusEvent,
   KeyboardEvent,
   MouseEvent,
   DragEvent,
 } from 'react';
-import SidebarMenu from './sidebar-menu';
-import { Bars2 } from './icons/bars-2';
-import IconButton from './buttons/icon-button';
-import { EllipsisVertical } from './icons/ellipsisVertical';
+
 import useGlobal from '../hooks/useGlobal';
+import { Notebook } from '../types';
+import SidebarMenu from './sidebar-menu';
+import IconButton from './buttons/icon-button';
 
-type SelectedNotebook = {
-  id: string;
-  index: number;
-};
+import { Bars2 } from './icons/bars-2';
+import { EllipsisVertical } from './icons/ellipsisVertical';
 
-export const SidebarItem = ({
+const SidebarItem = ({
   id,
   background,
   text,
   index,
   selecting,
   selectedNotebooks,
-  dragging,
   setSelectedNotebooks,
   setDragging,
   onSelectNotebook,
@@ -41,20 +37,19 @@ export const SidebarItem = ({
   text: string;
   index: number;
   selecting: boolean;
-  selectedNotebooks: Array<SelectedNotebook>;
-  dragging: boolean;
-  setSelectedNotebooks: Dispatch<SetStateAction<Array<SelectedNotebook>>>;
+  selectedNotebooks: Array<Notebook>;
+  setSelectedNotebooks: Dispatch<SetStateAction<Array<Notebook>>>;
   setDragging: (dragging: boolean) => void;
-  onSelectNotebook: (id: string) => void;
+  onSelectNotebook: (e: any, id: string) => void;
   exportJSON: (arr: Array<string>) => void;
-  exportMarkdown: (id: string) => void;
+  exportMarkdown: (idArr: Array<string>) => void;
   deleteNotebook: (id: string) => void;
 }): JSX.Element => {
   const [editing, setEditing] = useState<boolean>(false);
   const [expanded, setExpanded] = useState<boolean>(false);
   const [selected, setSelected] = useState<boolean>(false);
-  const inputRef = useRef<HTMLInputElement>();
-  const handleRef = useRef<HTMLSpanElement>();
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const handleRef = useRef<HTMLSpanElement | null>(null);
 
   const {
     state: { lastNotebookSelected, lastNotebookSelectedState, keyListener },
@@ -68,7 +63,9 @@ export const SidebarItem = ({
     dispatch({ type: 'lastNotebookSelectedState', value: checked });
 
   useEffect(() => {
-    let selIndex = selectedNotebooks.findIndex((obj) => obj.id === id);
+    let selIndex = selectedNotebooks.findIndex(
+      (obj: Notebook) => obj.id === id
+    );
     if (selIndex > -1) {
       setSelected(true);
     } else {
@@ -85,7 +82,7 @@ export const SidebarItem = ({
   const resetEditing = (e: FocusEvent) => {
     setEditing(false);
     let newName = (e.target as HTMLInputElement).value;
-    let localState = JSON.parse(localStorage.getItem('notebookState') || '');
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
 
     for (var i = 0; i < localState.notebooks.length; i++) {
       if (localState.notebooks[i].id === id) {
@@ -123,7 +120,7 @@ export const SidebarItem = ({
   const drop = (e: DragEvent) => {
     e.preventDefault();
     var data: number = parseInt(e.dataTransfer.getData('text'));
-    let localState = JSON.parse(localStorage.getItem('notebookState') || '');
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
     let notebooks = localState.notebooks;
     if (
       data < 0 ||
@@ -142,16 +139,19 @@ export const SidebarItem = ({
     setExpanded(false);
   };
 
-  const allowDrop = (e) => {
+  const allowDrop = (e: DragEvent) => {
     e.preventDefault();
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: any) => {
     setSelected(!selected);
-    let arr = [...selectedNotebooks];
-    let selIndex = selectedNotebooks.findIndex((obj) => obj.id === id);
+    let arr: Array<any> = [...selectedNotebooks];
+    let selIndex = selectedNotebooks.findIndex(
+      (obj: Notebook) => obj.id === id
+    );
     if (e.target.checked) {
       if (selIndex === -1) {
+        // @ts-ignore
         arr.push({ id, index });
       }
     } else {
@@ -163,19 +163,22 @@ export const SidebarItem = ({
     setSelectedNotebooks(arr);
   };
 
-  const handleClick = (e) => {
+  const handleClick = (e: MouseEvent) => {
     if (keyListener['ShiftLeft'] || keyListener['ShiftRight']) {
       let arr = [...selectedNotebooks];
-      if (lastNotebookSelected < index) {
+      if (lastNotebookSelected && lastNotebookSelected < index) {
         for (var i = index; i >= lastNotebookSelected + 1; i--) {
-          let targetCheckbox = document.getElementById(`notebook-index-${i}`);
+          let targetCheckbox = document.getElementById(
+            `notebook-index-${i}`
+          ) as HTMLInputElement;
           if (targetCheckbox.checked !== lastNotebookSelectedState) {
-            let nbid = targetCheckbox?.dataset.nbid;
+            let nbid = targetCheckbox.dataset.nbid;
             let selIndex = selectedNotebooks.findIndex(
-              (obj) => obj.id === nbid
+              (obj: Notebook) => obj.id === nbid
             );
-            if (!targetCheckbox.checked) {
+            if (!targetCheckbox.checked && nbid) {
               if (selIndex === -1) {
+                // @ts-ignore
                 arr.push({ id: nbid, index: i });
               }
             } else {
@@ -185,18 +188,22 @@ export const SidebarItem = ({
             }
           }
         }
+        // @ts-ignore
         arr = arr.sort((a, b) => a.index - b.index);
         setSelectedNotebooks(arr);
-      } else if (lastNotebookSelected > index) {
+      } else if (lastNotebookSelected && lastNotebookSelected > index) {
         for (var i = lastNotebookSelected - 1; i >= index; i--) {
-          let targetCheckbox = document.getElementById(`notebook-index-${i}`);
+          let targetCheckbox = document.getElementById(
+            `notebook-index-${i}`
+          ) as HTMLInputElement;
           if (targetCheckbox.checked !== lastNotebookSelectedState) {
             let nbid = targetCheckbox?.dataset.nbid;
             let selIndex = selectedNotebooks.findIndex(
-              (obj) => obj.id === nbid
+              (obj: Notebook) => obj.id === nbid
             );
             if (!targetCheckbox.checked) {
               if (selIndex === -1) {
+                // @ts-ignore
                 arr.push({ id: nbid, index: i });
               }
             } else {
@@ -206,21 +213,25 @@ export const SidebarItem = ({
             }
           }
         }
+        // @ts-ignore
         arr = arr.sort((a, b) => a.index - b.index);
         setSelectedNotebooks(arr);
       }
     } else {
       updateLastSelected(index);
+      // @ts-ignore
       if (e.target.tagName === 'DIV') {
+        // @ts-ignore
         let targetInput = e.target.querySelector('input');
         updateLastSelectedState(!targetInput.checked);
         setSelected(!selected);
         let arr = [...selectedNotebooks];
         let selIndex = selectedNotebooks.findIndex(
-          (obj) => obj.id === targetInput.dataset.nbid
+          (obj: Notebook) => obj.id === targetInput.dataset.nbid
         );
         if (!targetInput.checked) {
           if (selIndex === -1) {
+            // @ts-ignore
             arr.push({
               id: targetInput.dataset.nbid,
               index: targetInput.dataset.nbindex,
@@ -231,9 +242,11 @@ export const SidebarItem = ({
             arr.splice(selIndex, 1);
           }
         }
+        // @ts-ignore
         arr = arr.sort((a, b) => a.index - b.index);
         setSelectedNotebooks(arr);
       } else {
+        // @ts-ignore
         updateLastSelectedState(e.target.checked);
       }
     }
@@ -311,7 +324,7 @@ export const SidebarItem = ({
                 ref={handleRef}
                 className="text-ui-main-500 opacity-20 hover:opacity-100 cursor-grab active:cursor-grabbing"
               >
-                <Bars2 />
+                <Bars2 className="w-4 h-4" />
               </span>
 
               <SidebarMenu
@@ -333,3 +346,5 @@ export const SidebarItem = ({
     </div>
   );
 };
+
+export default SidebarItem;

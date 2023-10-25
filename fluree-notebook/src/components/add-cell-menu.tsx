@@ -1,17 +1,12 @@
 import { Fragment, useState } from 'react';
 import { Menu, Transition } from '@headlessui/react';
-import { PencilIcon } from '@heroicons/react/20/solid';
+
 import { Sparql } from './icons/sparql';
 import { Wave1 } from './icons/wave1';
 import { Wave2 } from './icons/wave2';
 import { Mermaid } from './icons/mermaid';
 import { Markdown } from './icons/markdown';
-import { Info } from './icons/info';
 import { Caution } from './icons/caution';
-
-function classNames(...classes) {
-  return classes.filter(Boolean).join(' ');
-}
 
 const AddCellMenu = ({
   addCell,
@@ -22,11 +17,12 @@ const AddCellMenu = ({
   children,
 }: {
   addCell: (
-    cellType: string,
-    conn: string,
+    cellType: 'Markdown' | 'Mermaid' | 'SPARQL' | 'FLUREEQL' | 'Admonition',
     defaultLedger: string,
+    conn?: string,
     index?: number
   ) => void;
+
   index?: number;
   position?: string;
   conn: string;
@@ -39,12 +35,14 @@ const AddCellMenu = ({
   const classes =
     'dark:bg-ui-neutral-900 text-gray-700 dark:text-[rgb(220,220,220)]';
 
-  const handleAddCell = (cellType) => {
+  const handleAddCell = (
+    cellType: 'Markdown' | 'Mermaid' | 'SPARQL' | 'FLUREEQL' | 'Admonition'
+  ) => {
     setWave(false);
     if (index !== undefined) {
-      addCell(cellType, conn, defaultLedger, index);
+      addCell(cellType, defaultLedger, conn, index);
     } else {
-      addCell(cellType, conn, defaultLedger);
+      addCell(cellType, defaultLedger, conn);
     }
   };
 
@@ -87,10 +85,9 @@ const AddCellMenu = ({
                   onClick={() => handleAddCell('FLUREEQL')}
                   onMouseOver={() => setWave(true)}
                   onMouseOut={() => setWave(false)}
-                  className={classNames(
-                    active ? activeClasses : classes,
-                    'group flex items-center px-4 py-2 text-sm'
-                  )}
+                  className={`${
+                    active ? activeClasses : classes
+                  } group flex items-center px-4 py-2 text-sm`}
                 >
                   <span
                     className={`inline-flex items-center -ml-[2px] mr-[8px] -my-[100px] justify-center w-[24px] h-[24px] transition-transform ${
@@ -118,10 +115,9 @@ const AddCellMenu = ({
               {({ active }) => (
                 <span
                   onClick={() => handleAddCell('SPARQL')}
-                  className={classNames(
-                    active ? activeClasses : classes,
-                    'group flex items-center px-4 py-2 text-sm'
-                  )}
+                  className={`${
+                    active ? activeClasses : classes
+                  } group flex items-center px-4 py-2 text-sm`}
                 >
                   <Sparql
                     className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
@@ -135,10 +131,9 @@ const AddCellMenu = ({
               {({ active }) => (
                 <span
                   onClick={() => handleAddCell('Markdown')}
-                  className={classNames(
-                    active ? activeClasses : classes,
-                    'group flex items-center px-4 py-2 text-sm'
-                  )}
+                  className={`${
+                    active ? activeClasses : classes
+                  } group flex items-center px-4 py-2 text-sm`}
                 >
                   <Markdown
                     className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
@@ -152,10 +147,9 @@ const AddCellMenu = ({
               {({ active }) => (
                 <span
                   onClick={() => handleAddCell('Mermaid')}
-                  className={classNames(
-                    active ? activeClasses : classes,
-                    'group flex items-center px-4 py-2 text-sm text-[snow]'
-                  )}
+                  className={`${
+                    active ? activeClasses : classes
+                  } group flex items-center px-4 py-2 text-sm`}
                 >
                   <Mermaid
                     className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
@@ -169,10 +163,9 @@ const AddCellMenu = ({
               {({ active }) => (
                 <span
                   onClick={() => handleAddCell('Admonition')}
-                  className={classNames(
-                    active ? activeClasses : classes,
-                    'group flex items-center px-4 py-2 text-sm text-[snow]'
-                  )}
+                  className={`${
+                    active ? activeClasses : classes
+                  } group flex items-center px-4 py-2 text-sm`}
                 >
                   <Caution
                     className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"

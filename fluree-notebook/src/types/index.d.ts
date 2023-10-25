@@ -1,16 +1,22 @@
 interface Cell {
-  type: 'markdown' | 'monaco';
+  id: string;
+  type: 'markdown' | 'monaco' | 'mermaid' | 'admonition';
   codeType?: 'fluree' | 'sparql';
   value: string;
+  conn?: string;
+  language: 'json' | 'sparql';
+  editing?: boolean;
+  admonitionType?: 'note' | 'info' | 'tip' | 'caution';
+  titleCell?: boolean;
 }
 
 interface NotebookProps {
   id: string;
   storedCells: Cell[];
-  defaultConn?: string;
+  defaultConn: string;
   onCellsChange: (cells: Cell[]) => void;
-  memTransact: (val: any) => void;
-  memQuery: (val: any) => void;
+  memTransact: (val: string, setter: any) => Promise<void>;
+  memQuery: (val: string, setter: any) => Promise<void>;
 }
 
 type NotebookState = {
@@ -18,4 +24,23 @@ type NotebookState = {
   activeNotebookId: string | null;
 };
 
-export type { Cell, NotebookProps, NotebookState };
+type Notebook = {
+  id: string;
+  name: string;
+  index?: number;
+  cells?: Array<Cell>;
+  defaultConn?: string | undefined;
+};
+
+type Conn = {
+  id: string;
+  name: string;
+  type: string;
+  url: string;
+  key?: string;
+  new?: boolean;
+};
+
+declare module 'mdx-mermaid/Mermaid';
+
+export type { Cell, NotebookProps, NotebookState, Notebook, Conn };

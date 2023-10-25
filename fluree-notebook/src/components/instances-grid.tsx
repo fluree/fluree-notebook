@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import ConnectionRow from './datasets-row';
+import { Conn } from '../types';
 
 const InstancesGrid = () => {
   const [instances, setInstances] = useState(
-    JSON.parse(localStorage.getItem('instances'))
+    JSON.parse(localStorage.getItem('instances') || '[]')
   );
 
   const addInstance = () => {
@@ -18,13 +19,13 @@ const InstancesGrid = () => {
     setInstances([...instances, newInstance]);
   };
 
-  const update = (value, index) => {
+  const update = (value: string, index: number) => {
     let arr = JSON.parse(JSON.stringify(instances));
     arr[index] = value;
     setInstances(arr);
   };
 
-  const remove = (index) => {
+  const remove = (index: number) => {
     let arr = JSON.parse(JSON.stringify(instances));
 
     let connToRemove = JSON.stringify(arr[index]);
@@ -68,7 +69,7 @@ const InstancesGrid = () => {
           </span>
         )}
         <dl className="divide-y divide-ui-main-800">
-          {instances.map((p, i) => (
+          {instances.map((p: Conn, i: number) => (
             <ConnectionRow
               key={i}
               row={p}

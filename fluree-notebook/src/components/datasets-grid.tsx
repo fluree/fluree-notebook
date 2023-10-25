@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import ConnectionRow from './datasets-row';
+import { Conn } from '../types';
 
 const DatasetsGrid = () => {
   const [datasets, setDatasets] = useState(
-    JSON.parse(localStorage.getItem('datasets'))
+    JSON.parse(localStorage.getItem('datasets') || '[]')
   );
 
   const addDataset = () => {
@@ -18,13 +19,13 @@ const DatasetsGrid = () => {
     setDatasets([...datasets, newDataset]);
   };
 
-  const update = (value, index) => {
+  const update = (value: string, index: number) => {
     let arr = JSON.parse(JSON.stringify(datasets));
     arr[index] = value;
     setDatasets(arr);
   };
 
-  const remove = (index) => {
+  const remove = (index: number) => {
     let arr = JSON.parse(JSON.stringify(datasets));
     arr.splice(index, 1);
     setDatasets(arr);
@@ -60,7 +61,7 @@ const DatasetsGrid = () => {
           </span>
         )}
         <dl className="divide-y divide-ui-indigo-800">
-          {datasets.map((p, i) => (
+          {datasets.map((p: Conn, i: number) => (
             <ConnectionRow
               key={i}
               row={p}

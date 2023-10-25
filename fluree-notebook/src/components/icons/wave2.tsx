@@ -1,4 +1,4 @@
-export const Wave2 = ({ className }) => (
+export const Wave2 = ({ className }: { className?: string }) => (
   <svg
     className={`${className} w-[24px] h-[24px] mr-[8px] -my-[40px]`}
     id="wave1"

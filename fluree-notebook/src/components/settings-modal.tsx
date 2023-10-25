@@ -1,24 +1,23 @@
 import { Fragment, useRef, useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { CheckIcon } from '@heroicons/react/24/outline';
+
+import useGlobal from '../hooks/useGlobal';
 import DatasetsGrid from './datasets-grid';
 import InstancesGrid from './instances-grid';
-import { XMarkIcon } from '@heroicons/react/20/solid';
 import IconButton from './buttons/icon-button';
-import { XMark } from './icons/x-mark';
-import useGlobal from '../hooks/useGlobal';
-import { Cube } from './icons/cube';
-import { Cloud } from './icons/cloud';
 import ConnectionMenu from './conn-menu';
-import { Globe } from './icons/globe';
 
-export default function SettingsModal() {
+import { Cloud } from './icons/cloud';
+import { Cube } from './icons/cube';
+import { Globe } from './icons/globe';
+import { XMark } from './icons/x-mark';
+
+const SettingsModal = () => {
   const {
     state: { settingsOpen, defaultConn },
     dispatch,
   } = useGlobal();
-  const closeSettings = (val) =>
-    dispatch({ type: 'settingsOpen', value: false });
+  const closeSettings = () => dispatch({ type: 'settingsOpen', value: false });
 
   const cancelButtonRef = useRef(null);
   const [conn, setConn] = useState(JSON.parse(defaultConn));
@@ -176,4 +175,6 @@ export default function SettingsModal() {
       </Dialog>
     </Transition.Root>
   );
-}
+};
+
+export default SettingsModal;

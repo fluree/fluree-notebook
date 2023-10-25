@@ -1,10 +1,16 @@
-import React, { createContext, useContext, useReducer } from 'react';
+import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 
-const initialState = {
+interface GlobalState {
+  theme: string | null;
+  settingsOpen: boolean;
+  keyListener: Record<string, unknown>;
+  lastNotebookSelected: null;
+  lastNotebookSelectedState: boolean;
+  defaultConn: string;
+}
+
+const initialState: GlobalState = {
   theme: localStorage.getItem('theme'),
-  //   input: [],
-  //   open: false,
-  //   settingsOpen: true,
   settingsOpen: false,
   keyListener: {},
   lastNotebookSelected: null,
@@ -12,17 +18,26 @@ const initialState = {
   defaultConn:
     localStorage.getItem('defaultConn') ??
     '{"id":"init","name":"localhost","url":"http://localhost:58090/fluree","type":"instance"}',
-  //   toolbarVisible: true,
-  //   localStorageListener: false,
 };
 
-const GlobalContext = createContext();
-
-function globalReducer(state, action) {
-  return { ...state, ...{ [action.type]: action.value } };
+interface GlobalAction {
+  type: string;
+  value: any;
 }
 
-function GlobalProvider({ children }) {
+const GlobalContext = createContext<
+  { state: GlobalState; dispatch: React.Dispatch<GlobalAction> } | undefined
+>(undefined);
+
+function globalReducer(state: GlobalState, action: GlobalAction): GlobalState {
+  return { ...state, [action.type]: action.value };
+}
+
+interface GlobalProviderProps {
+  children: ReactNode;
+}
+
+function GlobalProvider({ children }: GlobalProviderProps) {
   const [state, dispatch] = useReducer(globalReducer, initialState);
   const context = { state, dispatch };
   return (

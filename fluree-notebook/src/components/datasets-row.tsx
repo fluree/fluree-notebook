@@ -1,20 +1,32 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, KeyboardEvent, MouseEvent } from 'react';
 import IconButton from './buttons/icon-button';
-import { PencilSquare } from './icons/pencil-square';
-import { Delete } from './icons/delete';
+import { Conn } from '../types';
+
 import { Check } from './icons/check';
+import { Delete } from './icons/delete';
+import { PencilSquare } from './icons/pencil-square';
 import { XMark } from './icons/x-mark';
 
-const ConnectionRow = ({ row, index, update, remove }) => {
+const ConnectionRow = ({
+  row,
+  index,
+  update,
+  remove,
+}: {
+  row: Conn;
+  index: number;
+  update: (value: any, index: number) => void;
+  remove: (index: number) => void;
+}) => {
   const [editing, setEditing] = useState(row.new ? true : false);
   const [name, setName] = useState(row.name);
   const [url, setUrl] = useState(row.url);
   const [key, setKey] = useState(row.key);
   const [deleteRow, setDeleteRow] = useState(false);
-  const nameRef = useRef();
-  const urlRef = useRef();
-  const keyRef = useRef();
-  const keyObscuredRef = useRef();
+  const nameRef = useRef<HTMLInputElement | null>(null);
+  const urlRef = useRef<HTMLInputElement | null>(null);
+  const keyRef = useRef<HTMLInputElement | null>(null);
+  const keyObscuredRef = useRef<HTMLInputElement | null>(null);
 
   const startEditing = () => {
     setEditing(true);
@@ -25,12 +37,12 @@ const ConnectionRow = ({ row, index, update, remove }) => {
       nameRef.current.value = row.name;
       urlRef.current.value = row.url;
     }
-    if (keyRef.current) {
-      keyRef.current.value = row.key;
+    if (keyRef.current && row.key) {
+      (keyRef.current as HTMLInputElement).value = row.key;
     }
-    if (keyObscuredRef.current) {
+    if (keyObscuredRef.current && row.key) {
       keyObscuredRef.current.value =
-        row.key.substr(0, 5) + '*'.repeat(row.key.length - 5);
+        row.key.substring(0, 5) + '*'.repeat(row.key.length - 5);
     }
   }, [index, row.name, row.url, row.key]);
 
@@ -39,6 +51,7 @@ const ConnectionRow = ({ row, index, update, remove }) => {
       remove(index);
     } else {
       update(
+        // @ts-ignore
         {
           id: row.id,
           name,
@@ -60,18 +73,24 @@ const ConnectionRow = ({ row, index, update, remove }) => {
     remove(index);
   };
 
-  const handleDoubleClick = (e) => {
+  const handleDoubleClick = (e: MouseEvent) => {
     if (editing) {
       stopEditing();
     } else {
       startEditing();
     }
     setTimeout(() => {
-      e.target.focus();
+      // @ts-ignore
+      if (e.target.dataset.name === 'key-obscured') {
+        keyRef?.current?.focus();
+      } else {
+        // @ts-ignore
+        e.target.focus();
+      }
     }, 5);
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (e.code === 'Escape') {
       e.preventDefault();
       cancelEdit();
@@ -88,11 +107,19 @@ const ConnectionRow = ({ row, index, update, remove }) => {
       nameRef.current.value = row.name;
       urlRef.current.value = row.url;
     }
-    if (keyRef.current) {
+    if (keyRef.current && row.key) {
       setKey(row.key);
       keyRef.current.value = row.key;
     }
     setEditing(false);
+  };
+
+  const obscuredKey = () => {
+    if (row.key) {
+      return row.key?.substring(0, 5) + '*'.repeat(row.key.length - 5);
+    } else {
+      return '';
+    }
   };
 
   useEffect(() => {
@@ -155,7 +182,8 @@ const ConnectionRow = ({ row, index, update, remove }) => {
             onFocus={(e) => e.target.select()}
             ref={keyObscuredRef}
             onDoubleClick={handleDoubleClick}
-            defaultValue={row.key.substr(0, 5) + '*'.repeat(row.key.length - 5)}
+            data-name="key-obscured"
+            defaultValue={obscuredKey()}
             disabled={!editing}
             className={`bg-opacity-0 bg-white outline-none dark:bg-opacity-0 dark:bg-black w-[100%] px-2 py-1 rounded-md focus:ring-0 active:ring-0 ring-0 border-none text-sm
             ${
@@ -173,6 +201,7 @@ const ConnectionRow = ({ row, index, update, remove }) => {
             onFocus={(e) => e.target.select()}
             ref={keyRef}
             onDoubleClick={handleDoubleClick}
+            data-name="key"
             defaultValue={key}
             disabled={!editing}
             className={`bg-opacity-0 bg-white outline-none dark:bg-opacity-0 dark:bg-black w-[100%] px-2 py-1 rounded-md focus:ring-0 active:ring-0 ring-0 border-none text-sm

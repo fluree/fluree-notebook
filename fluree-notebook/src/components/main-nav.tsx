@@ -1,13 +1,13 @@
-import IconButton from './buttons/icon-button';
 import { ThemeToggle } from './buttons/theme-toggle';
-import { Fluree } from './icons/fluree';
-import { Gear } from './icons/gear';
+import IconButton from './buttons/icon-button';
 import useGlobal from '../hooks/useGlobal';
+
 import { Connections } from './icons/connections';
+import { Fluree } from './icons/fluree';
 
 export const MainNav = (): JSX.Element => {
   const { dispatch } = useGlobal();
-  const openSettings = (val) => dispatch({ type: 'settingsOpen', value: true });
+  const openSettings = () => dispatch({ type: 'settingsOpen', value: true });
 
   return (
     <div className="bg-ui-main-300 dark:bg-ui-main-900 w-[100%] h-16 relative flex items-center">

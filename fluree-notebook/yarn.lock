@@ -510,10 +510,24 @@
   resolved "https://registry.npmjs.org/@types/prop-types/-/prop-types-15.7.8.tgz"
   integrity sha512-kMpQpfZKSCBqltAJwskgePRaYRFukDkm1oItcAbC3gNELR20XIBcN9VRgg4+m8DKsTfkWeA4m4Imp4DDuWy7FQ==
 
+"@types/react-copy-to-clipboard@^5.0.6":
+  version "5.0.6"
+  resolved "https://registry.npmjs.org/@types/react-copy-to-clipboard/-/react-copy-to-clipboard-5.0.6.tgz"
+  integrity sha512-x347Gy+ZG2dCMiWEHRwiIJ4uMlTmxW7yheRMSQbNf0mFkmXhnYE5nvRdt6SbnT6Z2dp7KPIr3CSvBgSiTIr9zw==
+  dependencies:
+    "@types/react" "*"
+
 "@types/react-dom@^18.2.7":
   version "18.2.10"
   resolved "https://registry.npmjs.org/@types/react-dom/-/react-dom-18.2.10.tgz"
   integrity sha512-5VEC5RgXIk1HHdyN1pHlg0cOqnxHzvPGpMMyGAP5qSaDRmyZNDaQ0kkVAkK6NYlDhP6YBID3llaXlmAS/mdgCA==
+  dependencies:
+    "@types/react" "*"
+
+"@types/react-syntax-highlighter@^15.5.9":
+  version "15.5.9"
+  resolved "https://registry.npmjs.org/@types/react-syntax-highlighter/-/react-syntax-highlighter-15.5.9.tgz"
+  integrity sha512-ven8zRSVMNkqt8ySJ2eEW5ugbfl/V/Z9S1c9UNhGqwkwVZNV5akk10rYDALxgwS25cLmN+/Q5UxlGj9CJmZ6Ew==
   dependencies:
     "@types/react" "*"
 

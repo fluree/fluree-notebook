@@ -1,37 +1,27 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import ReactMarkdown from 'react-markdown';
 import Editor from '@monaco-editor/react';
 import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { coy } from 'react-syntax-highlighter/dist/cjs/styles/prism';
-import { dark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import vs from 'react-syntax-highlighter/dist/esm/styles/prism/vs.js';
-import vsDark from 'react-syntax-highlighter/dist/esm/styles/prism/vs-dark.js';
+
+import { Notebook, Conn } from '../types';
+import useGlobal from '../hooks/useGlobal';
 
 import IconButton from './buttons/icon-button';
-import { AddCellList } from './add-cell-list';
+import AddCellMenu from './add-cell-menu';
+import CodeBlock from '../codeblock';
+import AdmonitionMenu from './admonition-menu';
 
-import { Check } from './icons/check';
-import { Delete } from './icons/delete';
 import { ArrowUp } from './icons/arrowUp';
 import { ArrowDown } from './icons/arrowDown';
-import { Duplicate } from './icons/duplicate';
+import { Cancel } from './icons/cancel';
+import { Caution } from './icons/caution';
+import { Check } from './icons/check';
+import { Delete } from './icons/delete';
 import { DocumentUp } from './icons/document-up';
 import { DocumentDown } from './icons/document-down';
-import { Cancel } from './icons/cancel';
-import AddCellMenu from './add-cell-menu';
-import ConnectionMenu from './conn-menu';
-import { Cloud } from './icons/cloud';
-import { Cube } from './icons/cube';
-import { Globe } from './icons/globe';
-
-import useGlobal from '../hooks/useGlobal';
-import CodeBlock from '../codeblock';
-import Code from '../code';
-import AdmonitionMenu from './admonition-menu';
-import { Caution } from './icons/caution';
-import { LightBulb } from './icons/lightBulb';
+import { Duplicate } from './icons/duplicate';
 import { ExclamationCircle } from './icons/exclamationCircle';
+import { LightBulb } from './icons/lightBulb';
 import { Info } from './icons/info';
 
 const AdmonitionCell: React.FC<{
@@ -40,11 +30,16 @@ const AdmonitionCell: React.FC<{
   index: number;
   defaultConn: string;
   admonitionType: 'note' | 'info' | 'tip' | 'caution';
-  addCell: (value: 'Markdown' | 'SPARQL' | 'FLUREEQL', index?: number) => void;
-  moveCell: (direction: string, index: number) => void;
+  addCell: (
+    cellType: 'Markdown' | 'Mermaid' | 'SPARQL' | 'FLUREEQL' | 'Admonition',
+    defaultLedger: string,
+    conn?: string,
+    index?: number
+  ) => void;
+  moveCell: (direction: 'up' | 'down', index: number) => void;
   duplicateCell: (index: number) => void;
   deleteCell: (index: number) => void;
-  onChange: (newValue: string) => void;
+  onChange: (value: string) => void;
 }> = ({
   id,
   value,
@@ -61,9 +56,9 @@ const AdmonitionCell: React.FC<{
   const [storedValue, setStoredValue] = useState<string>(value);
   const [focused, setFocused] = useState<boolean>(false);
   const [hover, setHover] = useState<boolean>(false);
-  const monacoRef = useRef();
-  const editorRef = useRef();
-  const actionRef = useRef();
+  const monacoRef = useRef<any>(null);
+  const editorRef = useRef<any>(null);
+  const actionRef = useRef<HTMLSpanElement>();
 
   const {
     state: { defaultConn: globalConn },
@@ -111,19 +106,19 @@ const AdmonitionCell: React.FC<{
         setFocused(false);
       });
 
-      editor.onKeyDown((e) => {
+      editor.onKeyDown((e: KeyboardEvent) => {
         if (e.code === 'F9') {
-          actionRef.current.click();
+          (actionRef.current as HTMLSpanElement).click();
         }
       });
     }
   }
 
   useEffect(() => {
-    let localState = JSON.parse(localStorage.getItem('notebookState'));
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
     let activeNotebookId = localState.activeNotebookId;
     let activeNotebook = localState.notebooks.find(
-      (obj) => obj.id === activeNotebookId
+      (obj: Notebook) => obj.id === activeNotebookId
     );
     if (activeNotebook?.cells[index]?.editing === true) {
       setIsEditing(true);
@@ -132,21 +127,21 @@ const AdmonitionCell: React.FC<{
     }
   }, [id]);
 
-  const handleEditorChange = (value) => {
+  const handleEditorChange = (value: any) => {
     onChange(value);
   };
 
   const getDefaultLedger = () => {
     // get local storage
-    let localState = JSON.parse(localStorage.getItem('notebookState'));
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
 
     // get active notebook, index
     let activeNotebookId = localState.activeNotebookId;
     let activeNotebook = localState.notebooks.find(
-      (obj) => obj.id === activeNotebookId
+      (obj: Notebook) => obj.id === activeNotebookId
     );
 
-    let nbConn = '';
+    let nbConn: Conn;
     if (!defaultConn) {
       nbConn = JSON.parse(globalConn);
     } else {
@@ -161,15 +156,79 @@ const AdmonitionCell: React.FC<{
     return null;
   };
 
+  const admonitionWrapperStyles = {
+    note: 'bg-ui-neutral-200 dark:bg-ui-neutral-800 border-ui-neutral-400 dark:border-ui-neutral-700',
+    info: 'bg-ui-main-200 dark:bg-ui-main-800 border-ui-main-400 dark:border-ui-main-700',
+    tip: 'bg-ui-green-100 dark:bg-ui-green-900 border-ui-green-400 dark:border-ui-green-700',
+    caution:
+      'bg-ui-yellow-50 dark:bg-ui-yellow-900 border-ui-yellow-400 dark:border-ui-yellow-600',
+  };
+
+  const admonitionHeaderStyles = {
+    note: 'dark:text-ui-neutral-400 text-ui-neutral-600',
+    info: 'dark:text-ui-main-600 text-ui-main-600',
+    tip: 'dark:text-ui-green-400 text-ui-green-500',
+    caution: 'dark:text-ui-yellow-400 text-ui-yellow-400',
+  };
+
+  const AdmonitionIcon = () => {
+    switch (admonitionType) {
+      case 'note':
+        return (
+          <Info
+            className={`mr-[5px] -ml-[2px] -mt-[1px] h-5 w-5 text-ui-neutral-400 dark:text-ui-neutral-400 delay-200 transition 
+        ${
+          focused || hover
+            ? 'dark:text-opacity-100 text-opacity-100'
+            : 'dark:text-opacity-50 text-opacity-50'
+        }`}
+          />
+        );
+      case 'info':
+        return (
+          <ExclamationCircle
+            className={`mr-[5px] -ml-[2px] -mt-[1px] h-5 w-5 text-ui-main-500 dark:text-ui-main-500 delay-200 transition 
+        ${
+          focused || hover
+            ? 'dark:text-opacity-100 text-opacity-100'
+            : 'dark:text-opacity-50 text-opacity-50'
+        }`}
+          />
+        );
+      case 'tip':
+        return (
+          <LightBulb
+            className={`mr-[5px] -ml-[2px] -mt-[1px] h-5 w-5 text-ui-green-400 dark:text-ui-green-400 delay-200 transition 
+        ${
+          focused || hover
+            ? 'dark:text-opacity-100 text-opacity-100'
+            : 'dark:text-opacity-50 text-opacity-50'
+        }`}
+          />
+        );
+      case 'caution':
+        return (
+          <Caution
+            className={`mr-[5px] -ml-[2px] -mt-[1px] h-5 w-5 text-ui-yellow-400 dark:text-ui-yellow-400 delay-200 transition 
+        ${
+          focused || hover
+            ? 'dark:text-opacity-100 text-opacity-100'
+            : 'dark:text-opacity-50 text-opacity-50'
+        }`}
+          />
+        );
+    }
+  };
+
   const startEditing = () => {
     setIsEditing(true);
-    let localState = JSON.parse(localStorage.getItem('notebookState'));
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
     let activeNotebookId = localState.activeNotebookId;
     let activeNotebookIndex = localState.notebooks.findIndex(
-      (obj) => obj.id === activeNotebookId
+      (obj: Notebook) => obj.id === activeNotebookId
     );
     let activeNotebook = localState.notebooks.find(
-      (obj) => obj.id === activeNotebookId
+      (obj: Notebook) => obj.id === activeNotebookId
     );
     activeNotebook.cells[index].editing = true;
     localState.notebooks[activeNotebookIndex] = activeNotebook;
@@ -185,13 +244,13 @@ const AdmonitionCell: React.FC<{
 
   const stopEditing = () => {
     setIsEditing(false);
-    let localState = JSON.parse(localStorage.getItem('notebookState'));
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
     let activeNotebookId = localState.activeNotebookId;
     let activeNotebookIndex = localState.notebooks.findIndex(
-      (obj) => obj.id === activeNotebookId
+      (obj: Notebook) => obj.id === activeNotebookId
     );
     let activeNotebook = localState.notebooks.find(
-      (obj) => obj.id === activeNotebookId
+      (obj: Notebook) => obj.id === activeNotebookId
     );
     activeNotebook.cells[index].editing = false;
     localState.notebooks[activeNotebookIndex] = activeNotebook;
@@ -218,12 +277,13 @@ const AdmonitionCell: React.FC<{
         <div
           id="monaco-toolbar"
           className={`bg-ui-main-300 dark:bg-ui-neutral-700 bg-opacity-20 dark:bg-opacity-20 px-3 py-[3px] rounded-t-md
-          backdrop-blur transition flex gap-1 z-10
+          backdrop-blur transition flex gap-1
           ${
             focused || hover
               ? ''
               : 'dark:text-ui-neutral-500 text-ui-neutral-600'
           }`}
+          style={{ zIndex: 10000 - index }}
         >
           <IconButton
             onClick={stopEditing}
@@ -354,7 +414,7 @@ const AdmonitionCell: React.FC<{
         </div>
       </div>
 
-      <div className="flex flex-row rounded-md border-solid border-2 border-ui-indigo-500 border overflow-hidden mr-[23px]">
+      <div className="flex flex-row rounded-md border-solid border-2 border-ui-indigo-500 overflow-hidden mr-[23px]">
         <div
           className="w-[calc(50%)] flex"
           onMouseOver={() => setHover(true)}
@@ -386,58 +446,12 @@ const AdmonitionCell: React.FC<{
           <div
             data-name="admonition-wrapper"
             className={`px-6 py-5 m-2 rounded-xl border-l-[7px] shadow-md 
-            ${
-              admonitionType === 'note'
-                ? 'bg-ui-neutral-200 dark:bg-ui-neutral-800 border-ui-neutral-400 dark:border-ui-neutral-700 '
-                : ''
-            }
-
-            ${
-              admonitionType === 'info'
-                ? 'bg-ui-main-200 dark:bg-ui-main-800 border-ui-main-400 dark:border-ui-main-700 '
-                : ''
-            }
-
-              ${
-                admonitionType === 'tip'
-                  ? 'bg-ui-green-100 dark:bg-ui-green-900 border-ui-green-400 dark:border-ui-green-700 '
-                  : ''
-              }
-
-              ${
-                admonitionType === 'caution'
-                  ? 'bg-ui-yellow-50 dark:bg-ui-yellow-900 border-ui-yellow-400 dark:border-ui-yellow-600 '
-                  : ''
-              }
-            `}
+            ${admonitionWrapperStyles[admonitionType]}`}
           >
             <div
               data-name="admonition-header-container"
               className={`inline-flex items-center font-sans tracking-tight font-bold
-              ${
-                admonitionType === 'note'
-                  ? 'dark:text-ui-neutral-400 text-ui-neutral-600 '
-                  : ''
-              }
-  
-              ${
-                admonitionType === 'info'
-                  ? 'dark:text-ui-main-600 text-ui-main-600'
-                  : ''
-              }
-  
-                ${
-                  admonitionType === 'tip'
-                    ? 'dark:text-ui-green-400 text-ui-green-500'
-                    : ''
-                }
-  
-                ${
-                  admonitionType === 'caution'
-                    ? 'dark:text-ui-yellow-400 text-ui-yellow-400'
-                    : ''
-                }
-              `}
+              ${admonitionHeaderStyles[admonitionType]}`}
             >
               {admonitionType === 'note' && (
                 <Info className="mr-2 -mb-[2px] h-5 w-5" />
@@ -462,16 +476,11 @@ const AdmonitionCell: React.FC<{
               components={{
                 code({ inline, className, children, ...props }) {
                   if (inline) return <code {...props}>{children}</code>;
-
                   const value = String(children).replace(/\n$/, '');
                   let language = '';
                   if (className) {
                     language = className.replace('language-', '');
                   }
-
-                  // if (className === 'language-callout')
-                  //   return <Callout>{value}</Callout>;
-
                   return <CodeBlock language={language} value={value} />;
                 },
               }}
@@ -492,58 +501,12 @@ const AdmonitionCell: React.FC<{
         <div
           data-name="admonition-wrapper"
           className={`px-6 py-5 m-2 rounded-xl border-l-[7px] shadow-md 
-            ${
-              admonitionType === 'note'
-                ? 'bg-ui-neutral-200 dark:bg-ui-neutral-800 border-ui-neutral-400 dark:border-ui-neutral-700 '
-                : ''
-            }
-
-            ${
-              admonitionType === 'info'
-                ? 'bg-ui-main-200 dark:bg-ui-main-800 border-ui-main-400 dark:border-ui-main-700 '
-                : ''
-            }
-
-              ${
-                admonitionType === 'tip'
-                  ? 'bg-ui-green-100 dark:bg-ui-green-900 border-ui-green-400 dark:border-ui-green-700 '
-                  : ''
-              }
-
-              ${
-                admonitionType === 'caution'
-                  ? 'bg-ui-yellow-50 dark:bg-ui-yellow-900 border-ui-yellow-400 dark:border-ui-yellow-600 '
-                  : ''
-              }
-            `}
+            ${admonitionWrapperStyles[admonitionType]}`}
         >
           <div
             data-name="admonition-header-container"
             className={`inline-flex items-center font-sans tracking-tight font-bold
-              ${
-                admonitionType === 'note'
-                  ? 'dark:text-ui-neutral-400 text-ui-neutral-600 '
-                  : ''
-              }
-  
-              ${
-                admonitionType === 'info'
-                  ? 'dark:text-ui-main-600 text-ui-main-600'
-                  : ''
-              }
-  
-                ${
-                  admonitionType === 'tip'
-                    ? 'dark:text-ui-green-400 text-ui-green-500'
-                    : ''
-                }
-  
-                ${
-                  admonitionType === 'caution'
-                    ? 'dark:text-ui-yellow-400 text-ui-yellow-400'
-                    : ''
-                }
-              `}
+              ${admonitionHeaderStyles[admonitionType]}`}
           >
             {admonitionType === 'note' && (
               <Info className="mr-2 -mb-[2px] h-5 w-5" />
@@ -574,10 +537,6 @@ const AdmonitionCell: React.FC<{
                 if (className) {
                   language = className.replace('language-', '');
                 }
-
-                // if (className === 'language-callout')
-                //   return <Callout>{value}</Callout>;
-
                 return <CodeBlock language={language} value={value} />;
               },
             }}

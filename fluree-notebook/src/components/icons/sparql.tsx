@@ -1,10 +1,10 @@
-export const Sparql = ({ className }) => (
+export const Sparql = ({ className }: { className?: string }) => (
   <svg
     width="800px"
     height="800px"
     viewBox="0 0 32 32"
     xmlns="http://www.w3.org/2000/svg"
-    className={className}
+    className={className ? className : 'w-6 h-6'}
   >
     <title>file_type_sparql</title>
     <path

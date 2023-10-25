@@ -1,51 +1,54 @@
 import { useEffect } from 'react';
-import MarkdownCell from './components/markdown-cell.tsx';
-import type { NotebookProps } from './types/index.d.ts';
-import { QueryCell } from './components/query-cell.tsx';
-import { AddCell } from './components/buttons/add-cell.tsx';
+import type { Cell, NotebookProps, Notebook, Conn } from './types/index.d.ts';
 import useGlobal from './hooks/useGlobal.tsx';
-import { Mermaid } from 'mdx-mermaid/Mermaid';
-import { mermaidTheme } from './mermaidTheme';
-import MermaidCell from './components/mermaid-cell.tsx';
 
-import { Sandbox } from './sandbox.tsx';
+import QueryCell from './components/query-cell.tsx';
+import MarkdownCell from './components/markdown-cell.tsx';
+import MermaidCell from './components/mermaid-cell.tsx';
 import AdmonitionCell from './components/admonition-cell.tsx';
+import AddCell from './components/buttons/add-cell.tsx';
 
 interface CellProps {
   id: string;
-  type: 'markdown' | 'monaco';
+  type: 'markdown' | 'monaco' | 'mermaid' | 'admonition';
   value: string;
   result?: string;
-  resultStatus?: string;
+  resultStatus?: 'success' | 'error' | 'warn' | null;
   index: number;
   revert?: string;
-  defaultConn?: string;
+  defaultConn: string;
   language?: 'json' | 'sparql';
-  conn: string;
   titleCell: boolean;
   admonitionType: 'note' | 'info' | 'tip' | 'caution';
-  addCell: (value: 'Markdown' | 'SPARQL' | 'FLUREEQL', index?: number) => void;
+  editing?: boolean;
+  conn?: string;
+  addCell: (
+    cellType: 'Markdown' | 'Mermaid' | 'SPARQL' | 'FLUREEQL' | 'Admonition',
+    defaultLedger: string,
+    conn?: string,
+    index?: number
+  ) => void;
   moveCell: (direction: string, index: number) => void;
   duplicateCell: (index: number) => void;
   deleteCell: (index: number) => void;
   clearResult: (index: number) => void;
   onChange: (value: string) => void;
   onDelete: () => void;
-  memTransact: (val: any) => void;
-  memQuery: (val: any) => void;
+  memTransact: (val: string, setter: any) => Promise<void>;
+  memQuery: (val: string, setter: any) => Promise<void>;
 }
 
 const duplicateCell = (index: number) => {
   // get local storage
-  let localState = JSON.parse(localStorage.getItem('notebookState'));
+  let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
 
   // get active notebook, index
   let activeNotebookId = localState.activeNotebookId;
   let activeNotebookIndex = localState.notebooks.findIndex(
-    (obj) => obj.id === activeNotebookId
+    (obj: Notebook) => obj.id === activeNotebookId
   );
   let activeNotebook = localState.notebooks.find(
-    (obj) => obj.id === activeNotebookId
+    (obj: Notebook) => obj.id === activeNotebookId
   );
 
   // cells of active notebook; remove cell
@@ -73,23 +76,23 @@ const duplicateCell = (index: number) => {
   window.dispatchEvent(new Event('storage'));
 };
 
-const moveCell = (direction, index) => {
+const moveCell = (direction: 'up' | 'down', index: number) => {
   // get local storage
-  let localState = JSON.parse(localStorage.getItem('notebookState'));
+  let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
 
   // get active notebook, index
   let activeNotebookId = localState.activeNotebookId;
   let activeNotebookIndex = localState.notebooks.findIndex(
-    (obj) => obj.id === activeNotebookId
+    (obj: Notebook) => obj.id === activeNotebookId
   );
   let activeNotebook = localState.notebooks.find(
-    (obj) => obj.id === activeNotebookId
+    (obj: Notebook) => obj.id === activeNotebookId
   );
 
   // cells of active notebook; remove cell
   let activeNotebookCells = activeNotebook.cells;
 
-  let newIndex = index;
+  let newIndex: number = index;
   if (direction === 'down') {
     newIndex++;
     newIndex = Math.min(...[newIndex, activeNotebookCells.length - 1]);
@@ -112,15 +115,15 @@ const moveCell = (direction, index) => {
 
 const deleteCell = (index: number) => {
   // get local storage
-  let localState = JSON.parse(localStorage.getItem('notebookState'));
+  let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
 
   // get active notebook, index
   let activeNotebookId = localState.activeNotebookId;
   let activeNotebookIndex = localState.notebooks.findIndex(
-    (obj) => obj.id === activeNotebookId
+    (obj: Notebook) => obj.id === activeNotebookId
   );
   let activeNotebook = localState.notebooks.find(
-    (obj) => obj.id === activeNotebookId
+    (obj: Notebook) => obj.id === activeNotebookId
   );
 
   // cells of active notebook; remove cell
@@ -141,6 +144,8 @@ const deleteCell = (index: number) => {
     }
   }
 
+  console.log(result);
+
   if (result.length === 1) {
     activeNotebook.defaultConn = result[0];
   }
@@ -153,15 +158,15 @@ const deleteCell = (index: number) => {
 
 const clearResult = (index: number) => {
   // get local storage
-  let localState = JSON.parse(localStorage.getItem('notebookState'));
+  let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
 
   // get active notebook, index
   let activeNotebookId = localState.activeNotebookId;
   let activeNotebookIndex = localState.notebooks.findIndex(
-    (obj) => obj.id === activeNotebookId
+    (obj: Notebook) => obj.id === activeNotebookId
   );
   let activeNotebook = localState.notebooks.find(
-    (obj) => obj.id === activeNotebookId
+    (obj: Notebook) => obj.id === activeNotebookId
   );
 
   // cells of active notebook; remove cell
@@ -197,16 +202,16 @@ const defaultFlureeQL = (defaultLedger: string) =>
 const defaultAdmonition = 'this is an admonition cell';
 
 const addCell = (
-  value: 'Markdown' | 'Mermaid' | 'SPARQL' | 'FLUREEQL' | 'Admonition',
-  conn: string,
+  cellType: 'Markdown' | 'Mermaid' | 'SPARQL' | 'FLUREEQL' | 'Admonition',
   defaultLedger: string = 'ledgerName',
+  conn?: string,
   index?: number
 ) => {
   let newVal: string = '';
   let language: 'json' | 'sparql' = 'json';
   let type: 'monaco' | 'mermaid' | 'markdown' | 'admonition' = 'monaco';
 
-  switch (value) {
+  switch (cellType) {
     case 'FLUREEQL':
       newVal = defaultFlureeQL(defaultLedger);
       break;
@@ -233,27 +238,33 @@ const addCell = (
   }
 
   const id = Math.random().toString(36).substring(7); // generate a unique id
-  let newCell = { id, type, conn, value: newVal, language };
+  let newCell: Cell = {
+    id,
+    type,
+    conn,
+    value: newVal,
+    language,
+  };
 
-  if (['Mermaid', 'Markdown', 'Admonition'].includes(value)) {
+  if (['Mermaid', 'Markdown', 'Admonition'].includes(cellType)) {
     newCell.editing = true;
     delete newCell.conn;
   }
 
-  if (value === 'Admonition') {
+  if (cellType === 'Admonition') {
     newCell.admonitionType = 'info';
   }
 
   // get local storage
-  let localState = JSON.parse(localStorage.getItem('notebookState'));
+  let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
 
   // get active notebook, index
   let activeNotebookId = localState.activeNotebookId;
   let activeNotebookIndex = localState.notebooks.findIndex(
-    (obj) => obj.id === activeNotebookId
+    (obj: Notebook) => obj.id === activeNotebookId
   );
   let activeNotebook = localState.notebooks.find(
-    (obj) => obj.id === activeNotebookId
+    (obj: Notebook) => obj.id === activeNotebookId
   );
 
   // cells of active notebook; remove cell
@@ -392,15 +403,15 @@ const Notebook: React.FC<NotebookProps> = ({
 
   const getDefaultLedger = () => {
     // get local storage
-    let localState = JSON.parse(localStorage.getItem('notebookState'));
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
 
     // get active notebook, index
     let activeNotebookId = localState.activeNotebookId;
     let activeNotebook = localState.notebooks.find(
-      (obj) => obj.id === activeNotebookId
+      (obj: Notebook) => obj.id === activeNotebookId
     );
 
-    let nbConn = '';
+    let nbConn: Conn;
     if (!defaultConn) {
       nbConn = JSON.parse(globalConn);
     } else {
@@ -415,44 +426,7 @@ const Notebook: React.FC<NotebookProps> = ({
     return null;
   };
 
-  // uses state to update dom, rather than dispatching "storage" event
-  //   const addCell = (value: 'Markdown' | 'SPARQL' | 'FLUREEQL') => {
-  //     let newVal: string = '';
-  //     let language: 'json' | 'sparql' = 'json';
-  //     let type: 'monaco' | 'markdown' = 'monaco';
-
-  //     if (value === 'Markdown') {
-  //       type = 'markdown';
-  //       newVal = '## New Markdown Cell\n Double-click to toggle editing';
-  //     }
-
-  //     if (value === 'SPARQL') {
-  //       language = 'sparql';
-
-  //       newVal = 'SELECT ?s \nFROM <notebook1>\nWHERE {\n?s <type> rdfs:Class\n}';
-  //     }
-
-  //     if (value === 'FLUREEQL') {
-  //       newVal = JSON.stringify(
-  //         {
-  //           from: 'notebook1',
-  //           select: '?s',
-  //           where: [['?s', 'rdf:type', 'rdfs:Class']],
-  //         },
-  //         null,
-  //         2
-  //       );
-  //     }
-
-  //     const newCells = [
-  //       ...storedCells,
-  //       { type, value: newVal, language: language },
-  //     ];
-  //     console.log('NEW CELLS: ', newCells);
-  //     onCellsChange(newCells);
-  //   };
-
-  // this code is a lot cleaner, so consider refactoring existing
+  // using state rather than localstorage event todo: refactor
   //   const deleteCell = (idx: number) => {
   //     const newCells = storedCells.filter((_, index) => index !== idx);
   //     onCellsChange(newCells);
@@ -462,6 +436,7 @@ const Notebook: React.FC<NotebookProps> = ({
     <div className="dark:text-white">
       {storedCells.map((cell, idx) => (
         <div className="cell" key={`${id}-${idx}`}>
+          {/* @ts-ignore */}
           <Cell
             key={`${id}-${idx}`}
             {...cell}

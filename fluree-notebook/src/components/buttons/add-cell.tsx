@@ -1,8 +1,5 @@
-import { useState } from 'react';
-import { AddCellList } from '../add-cell-list';
 import AddCellMenu from '../add-cell-menu';
 import { Plus } from '../icons/plus';
-import { CheckCircleIcon } from '@heroicons/react/20/solid';
 
 export const Line = (): JSX.Element => {
   return (
@@ -54,14 +51,19 @@ export const Chevron = ({ down }: { down: boolean }): JSX.Element => {
   }
 };
 
-export const AddCell = ({
+const AddCell = ({
   addCell,
   conn,
   defaultLedger,
 }: {
-  addCell: (value: 'Markdown' | 'FLUREEQL' | 'SPARQL') => void;
+  addCell: (
+    cellType: 'Markdown' | 'Mermaid' | 'SPARQL' | 'FLUREEQL' | 'Admonition',
+    defaultLedger: string,
+    conn?: string,
+    index?: number
+  ) => void;
   conn: string;
-  defaultLedger?: string;
+  defaultLedger: string;
 }): JSX.Element => {
   return (
     <div className=" justify-start items-start flex flex-col-reverse dark:text-white">
@@ -88,3 +90,5 @@ export const AddCell = ({
     </div>
   );
 };
+
+export default AddCell;

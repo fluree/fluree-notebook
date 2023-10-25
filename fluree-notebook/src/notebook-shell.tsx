@@ -1,25 +1,28 @@
-import { useState, useEffect } from 'react';
-import { Sidebar } from './components/sidebar.tsx';
-import Notebook from './notebook.tsx';
-import type { NotebookState, Cell } from './types/index';
+import { useState, useEffect, KeyboardEvent, DragEvent } from 'react';
 import { MainNav } from './components/main-nav.tsx';
+import Sidebar from './components/sidebar.tsx';
+import Notebook from './notebook.tsx';
 import useGlobal from './hooks/useGlobal.tsx';
 
+import type {
+  NotebookState,
+  Cell,
+  Notebook as NotebookType,
+  Conn,
+} from './types/index';
+
+// @ts-ignore
 import useFluree from './flureedb/useFluree';
+// @ts-ignore
 import { memoryConnOptions } from './flureedb/config';
 
 export const NotebookShell = (): JSX.Element => {
-  const {
-    conn: fConn,
-    ledger,
-    stagedDb,
-    committedDb,
-    stage,
-    commit,
-    query,
-  } = useFluree('test/jld', memoryConnOptions(null));
+  const { ledger, stagedDb, committedDb, stage, commit, query } = useFluree(
+    'test/jld',
+    memoryConnOptions(null)
+  );
 
-  const memQuery = async (value, setter) => {
+  const memQuery = async (value: string, setter: any) => {
     if (committedDb) {
       if (ledger) {
         const r = await query(committedDb, value);
@@ -28,13 +31,12 @@ export const NotebookShell = (): JSX.Element => {
     }
   };
 
-  const memTransact = async (value, setter) => {
+  const memTransact = async (value: string, setter: any) => {
     let newStaged;
     if (value) {
       // staging
       newStaged = await stage(ledger, value);
     }
-
     if (ledger) {
       const r = await commit(ledger, newStaged ?? stagedDb);
       if (r) {
@@ -51,7 +53,7 @@ export const NotebookShell = (): JSX.Element => {
 
   const circularReplacer = () => {
     const seen = new WeakSet();
-    return (key, value) => {
+    return (key: any, value: any) => {
       if (typeof value === 'object' && value !== null) {
         if (seen.has(value)) {
           return;
@@ -92,11 +94,11 @@ export const NotebookShell = (): JSX.Element => {
     dispatch,
   } = useGlobal();
 
-  const updateGlobalKey = (val) => {
+  const updateGlobalKey = (val: any) => {
     dispatch({ type: 'keyListener', value: val });
   };
 
-  const globalListener = (e) => {
+  const globalListener = (e: KeyboardEvent) => {
     const listenKeys = ['AltLeft', 'AltRight', 'ShiftLeft', 'ShiftRight'];
     if (e.type == 'keydown') {
       if (listenKeys.includes(e.code)) {
@@ -119,6 +121,7 @@ export const NotebookShell = (): JSX.Element => {
       'defaultConn',
       'instances',
       'notebookState',
+      'admin',
     ];
     allKeys.forEach((key) => {
       if (!allowedKeys.includes(key)) {
@@ -128,11 +131,15 @@ export const NotebookShell = (): JSX.Element => {
   };
 
   useEffect(() => {
+    // @ts-ignore
     window.addEventListener('keydown', globalListener);
+    // @ts-ignore
     window.addEventListener('keyup', globalListener);
     cleanLocalStorage();
     return () => {
+      // @ts-ignore
       window.removeEventListener('keydown', globalListener);
+      // @ts-ignore
       window.removeEventListener('keyup', globalListener);
     };
   }, []);
@@ -198,10 +205,10 @@ export const NotebookShell = (): JSX.Element => {
 
   const addNewNotebook = () => {
     const id = Math.random().toString(36).substring(7); // generate a unique id
-    let localState = JSON.parse(localStorage.getItem('notebookState'));
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
     let notebooks = localState.notebooks;
 
-    let names = notebooks.map((notebook) => notebook.name);
+    let names = notebooks.map((notebook: NotebookType) => notebook.name);
     let name = '';
     for (var i = 1; i <= names.length + 1; i++) {
       if (names.indexOf(`notebook${i}`) === -1) {
@@ -210,8 +217,8 @@ export const NotebookShell = (): JSX.Element => {
       }
     }
 
-    let ledger = null;
-    let defConn = JSON.parse(defaultConn);
+    let ledger: string;
+    let defConn: Conn = JSON.parse(defaultConn);
 
     if (defConn.type === 'dataset') {
       ledger = defConn.name;
@@ -247,7 +254,7 @@ export const NotebookShell = (): JSX.Element => {
     }));
   };
 
-  const selectNotebook = (e, id: string) => {
+  const selectNotebook = (e: any, id: string) => {
     if (e.target.type !== 'checkbox' && e.target.dataset.role !== 'hitbox') {
       setState((prevState) => ({ ...prevState, activeNotebookId: id }));
     }
@@ -262,18 +269,18 @@ export const NotebookShell = (): JSX.Element => {
     });
   };
 
-  const addNotebooks = (array) => {
-    let arrayData = JSON.parse(array);
+  const addNotebooks = (stringifiedArray: any) => {
+    let arrayData = JSON.parse(stringifiedArray);
     for (var i = 0; i < arrayData.length; i++) {
       addNotebook(arrayData[i]);
     }
   };
 
-  const addNotebook = (data) => {
+  const addNotebook = (stringifiedData: string) => {
     // get local storage
-    let localState = JSON.parse(localStorage.getItem('notebookState'));
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
 
-    let newData = JSON.parse(JSON.stringify(data));
+    let newData = JSON.parse(JSON.stringify(stringifiedData));
     newData.defaultConn = defaultConn;
 
     if (!newData.cells[0].titleCell) {
@@ -288,12 +295,14 @@ export const NotebookShell = (): JSX.Element => {
     }
 
     for (var i = 0; i < newData.cells.length; i++) {
-      newData.cells[i].conn = defaultConn;
+      if (newData.cells[i].type === 'monaco') {
+        newData.cells[i].conn = defaultConn;
+      }
     }
 
     // if ID already exists...
     let existingNotebook = localState.notebooks.findIndex(
-      (obj) => obj.id === newData.id
+      (obj: NotebookType) => obj.id === newData.id
     );
 
     if (existingNotebook > -1) {
@@ -317,28 +326,29 @@ export const NotebookShell = (): JSX.Element => {
     }, 500);
   };
 
-  function removeTrailingNewline(str) {
+  function removeTrailingNewline(str: string) {
     let newVal = str.endsWith('\n') ? str.slice(0, -1) : str;
     return newVal;
   }
 
-  function markdownToJson(markdown) {
+  function markdownToJson(markdown: string) {
     const lines = markdown.split('\n');
 
-    const result = {
+    const result: NotebookType = {
       id: Math.random().toString(36).substring(7),
-      name: null,
+      name: '',
       cells: [],
     };
 
     let isInsideCodeBlock = false;
     let codeContent = '';
-    let language = 'json'; // Default code language
+    let language: 'json' | 'sparql' = 'json'; // Default code language
     let currentText = ''; // Accumulates plain text
 
     for (let line of lines) {
       if (line.startsWith('```')) {
         if (currentText.trim()) {
+          // @ts-ignore
           result.cells.push({
             id: Math.random().toString(36).substr(2, 6),
             type: 'markdown',
@@ -350,6 +360,7 @@ export const NotebookShell = (): JSX.Element => {
         }
 
         if (isInsideCodeBlock) {
+          // @ts-ignore
           result.cells.push({
             id: Math.random().toString(36).substr(2, 6),
             type: 'monaco',
@@ -360,7 +371,9 @@ export const NotebookShell = (): JSX.Element => {
         } else {
           const langMatch = line.match(/```(\w+)/);
           if (langMatch) {
-            language = langMatch[1];
+            if (langMatch[1] === 'json' || langMatch[1] === 'sparql') {
+              language = langMatch[1];
+            }
           }
         }
 
@@ -369,6 +382,7 @@ export const NotebookShell = (): JSX.Element => {
         codeContent += line + '\n';
       } else if (line.startsWith('#')) {
         if (currentText.trim()) {
+          // @ts-ignore
           result.cells.push({
             id: Math.random().toString(36).substr(2, 6),
             type: 'markdown',
@@ -387,9 +401,10 @@ export const NotebookShell = (): JSX.Element => {
           // If it's an H1 and name hasn't been set yet, set it
           if (headerLevel === 1 && !result.name) {
             result.name = headerContent;
+            continue;
           }
 
-          //   currentText += line + '\n';
+          currentText += line + '\n';
         }
       } else {
         currentText += line + '\n';
@@ -398,7 +413,7 @@ export const NotebookShell = (): JSX.Element => {
 
     // After looping, if there's still plain text accumulated, add it as a markdown cell
     if (currentText.trim()) {
-      result.cells.push({
+      result?.cells?.push({
         id: Math.random().toString(36).substr(2, 6),
         type: 'markdown',
         value: removeTrailingNewline(currentText),
@@ -410,7 +425,7 @@ export const NotebookShell = (): JSX.Element => {
     return result;
   }
 
-  const handleAdmonitions = (cells) => {
+  const handleAdmonitions = (cells: Array<Cell>) => {
     return cells.reduce((newCells, cell) => {
       if (cell.type === 'markdown' && cell.value.includes('<Admonition')) {
         // Split the markdown content to extract Admonition components
@@ -423,6 +438,7 @@ export const NotebookShell = (): JSX.Element => {
             );
             if (match) {
               const [, admonitionType, content] = match;
+              // @ts-ignore
               newCells.push({
                 id: Math.random().toString(36).substring(7),
                 type: 'admonition',
@@ -433,6 +449,7 @@ export const NotebookShell = (): JSX.Element => {
               });
             }
           } else if (part.trim()) {
+            // @ts-ignore
             newCells.push({
               ...cell,
               value: part.trim(),
@@ -440,15 +457,54 @@ export const NotebookShell = (): JSX.Element => {
           }
         });
       } else {
+        // @ts-ignore
         newCells.push(cell);
       }
       return newCells;
     }, []);
   };
 
-  const importMarkdown = (data) => {
+  const handleMermaids = (cells: Array<Cell>) => {
+    return cells.reduce((newCells, cell) => {
+      if (cell.type === 'markdown' && cell.value.includes('<FlureeMermaid')) {
+        // Split the markdown content to extract FlureeMermaid components
+        const parts = cell.value.split(/(<FlureeMermaid.*?\/>)/s);
+        parts.forEach((part) => {
+          if (part.startsWith('<FlureeMermaid')) {
+            // Extract chart content from FlureeMermaid component
+            const match = part.match(
+              /<FlureeMermaid\s+chart={`([\s\S]*?)`}\s*\/>/
+            );
+            if (match) {
+              const [, chartContent] = match;
+              // @ts-ignore
+              newCells.push({
+                id: Math.random().toString(36).substring(7),
+                type: 'mermaid',
+                value: chartContent.trim(),
+                language: 'json',
+                editing: false,
+              });
+            }
+          } else if (part.trim()) {
+            // @ts-ignore
+            newCells.push({
+              ...cell,
+              value: part.trim(),
+            });
+          }
+        });
+      } else {
+        // @ts-ignore
+        newCells.push(cell);
+      }
+      return newCells;
+    }, []);
+  };
+
+  const importMarkdown = (data: any) => {
     // get local storage
-    let localState = JSON.parse(localStorage.getItem('notebookState'));
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
 
     let newData = markdownToJson(data);
     newData.defaultConn = defaultConn;
@@ -456,69 +512,69 @@ export const NotebookShell = (): JSX.Element => {
     console.log(newData);
 
     // Handle Admonition components
-    newData.cells = handleAdmonitions(newData.cells);
+    if (newData.cells) {
+      newData.cells = handleAdmonitions(newData.cells);
+      newData.cells = handleMermaids(newData.cells);
 
-    if (!newData.cells[0].titleCell) {
-      let titleCell = {
-        id: Math.random().toString(36).substring(7),
-        value: `# ${newData.name}`,
-        language: 'json',
-        type: 'markdown',
-        titleCell: true,
-      };
-      newData.cells.splice(0, 0, titleCell);
-    }
+      if (!newData.cells[0].titleCell) {
+        let titleCell = {
+          id: Math.random().toString(36).substring(7),
+          value: `# ${newData.name}`,
+          language: 'json',
+          type: 'markdown',
+          titleCell: true,
+        };
+        // @ts-ignore
+        newData.cells.splice(0, 0, titleCell);
+      }
 
-    for (var i = 0; i < newData.cells.length; i++) {
-      newData.cells[i].conn = defaultConn;
-    }
+      for (var i = 0; i < newData.cells.length; i++) {
+        newData.cells[i].conn = defaultConn;
+      }
 
-    // if ID already exists...
-    let existingNotebook = localState.notebooks.findIndex(
-      (obj) => obj.id === newData.id
-    );
+      // if ID already exists...
+      let existingNotebook = localState.notebooks.findIndex(
+        (obj: Notebook) => obj.id === newData.id
+      );
 
-    if (existingNotebook > -1) {
-      if (confirm(`Replace existing notebook? (id: ${newData.id})`) === true) {
-        // replace existing...
-        localState.notebooks.splice(existingNotebook, 1, newData);
-        localState.activeNotebookId = newData.id;
+      if (existingNotebook > -1) {
+        if (
+          confirm(`Replace existing notebook? (id: ${newData.id})`) === true
+        ) {
+          // replace existing...
+          localState.notebooks.splice(existingNotebook, 1, newData);
+          localState.activeNotebookId = newData.id;
+        } else {
+          // assign new id
+          newData.id = Math.random().toString(36).substring(7);
+          localState.notebooks.push(newData);
+          localState.activeNotebookId = newData.id;
+        }
       } else {
-        // assign new id
-        newData.id = Math.random().toString(36).substring(7);
         localState.notebooks.push(newData);
         localState.activeNotebookId = newData.id;
       }
-    } else {
-      localState.notebooks.push(newData);
-      localState.activeNotebookId = newData.id;
+      localStorage.setItem('notebookState', JSON.stringify(localState));
+      setTimeout(() => {
+        window.dispatchEvent(new Event('storage'));
+      }, 500);
     }
-    localStorage.setItem('notebookState', JSON.stringify(localState));
-    setTimeout(() => {
-      window.dispatchEvent(new Event('storage'));
-    }, 500);
   };
 
-  const allowDrop = (e) => {
+  const allowDrop = (e: DragEvent) => {
     e.preventDefault();
   };
 
-  const drop = (e) => {
+  const drop = (e: DragEvent) => {
     e.preventDefault();
-
-    console.log(e.dataTransfer.files);
-
-    // file type is application/json
-    // file type is text/markdown
-
-    // var file = e.dataTransfer.files[0],
-
     for (var i = 0; i < e.dataTransfer.files.length; i++) {
       let thisFile = e.dataTransfer.files[i];
       if (thisFile.type === 'application/json') {
         let reader = new FileReader();
         reader.onload = function (event) {
-          addNotebooks(event.target.result);
+          if (event.target) {
+            addNotebooks(event.target.result);
+          }
         };
         reader.readAsText(e.dataTransfer.files[i]);
       } else if (
@@ -527,14 +583,13 @@ export const NotebookShell = (): JSX.Element => {
       ) {
         let reader = new FileReader();
         reader.onload = function (event) {
-          importMarkdown(event.target.result);
-          console.log(event.target.result);
+          if (event.target) {
+            importMarkdown(event.target.result);
+          }
         };
         reader.readAsText(e.dataTransfer.files[i]);
       }
     }
-
-    // reader.readAsText(file);
   };
 
   return (
@@ -551,7 +606,6 @@ export const NotebookShell = (): JSX.Element => {
           onSelectNotebook={selectNotebook}
           addNotebook={addNewNotebook}
           addNotebooks={addNotebooks}
-          markdownToJson={markdownToJson}
           importMarkdown={importMarkdown}
         />
         <div className="w-[calc(100%)] bg-white dark:bg-ui-neutral-900 py-4 pl-5 rounded-lg">
@@ -561,11 +615,11 @@ export const NotebookShell = (): JSX.Element => {
               key={state.activeNotebookId}
               storedCells={
                 state.notebooks.find((n) => n.id === state.activeNotebookId)
-                  ?.cells
+                  ?.cells || []
               }
               defaultConn={
                 state.notebooks.find((n) => n.id === state.activeNotebookId)
-                  ?.defaultConn
+                  ?.defaultConn || defaultConn
               }
               onCellsChange={(cells: Cell[]) =>
                 editNotebook(state.activeNotebookId as string, cells)

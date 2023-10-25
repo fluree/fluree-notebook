@@ -1,28 +1,22 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import ReactMarkdown from 'react-markdown';
 import Editor from '@monaco-editor/react';
 import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { coy } from 'react-syntax-highlighter/dist/cjs/styles/prism';
-import { dark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import vs from 'react-syntax-highlighter/dist/esm/styles/prism/vs.js';
-import vsDark from 'react-syntax-highlighter/dist/esm/styles/prism/vs-dark.js';
-
-import IconButton from './buttons/icon-button';
-import { AddCellList } from './add-cell-list';
-
-import { Check } from './icons/check';
-import { Delete } from './icons/delete';
-import { ArrowUp } from './icons/arrowUp';
-import { ArrowDown } from './icons/arrowDown';
-import { Duplicate } from './icons/duplicate';
-import { DocumentUp } from './icons/document-up';
-import { DocumentDown } from './icons/document-down';
-import { Cancel } from './icons/cancel';
-import AddCellMenu from './add-cell-menu';
 
 import useGlobal from '../hooks/useGlobal';
+import { Conn, Notebook } from '../types';
+import AddCellMenu from './add-cell-menu';
+import IconButton from './buttons/icon-button';
 import CodeBlock from '../codeblock';
+
+import { ArrowDown } from './icons/arrowDown';
+import { ArrowUp } from './icons/arrowUp';
+import { Cancel } from './icons/cancel';
+import { Check } from './icons/check';
+import { Delete } from './icons/delete';
+import { Duplicate } from './icons/duplicate';
+import { DocumentDown } from './icons/document-down';
+import { DocumentUp } from './icons/document-up';
 
 const MarkdownCell: React.FC<{
   id: string;
@@ -30,8 +24,13 @@ const MarkdownCell: React.FC<{
   index: number;
   defaultConn: string;
   titleCell?: boolean;
-  addCell: (value: 'Markdown' | 'SPARQL' | 'FLUREEQL', index?: number) => void;
-  moveCell: (direction: string, index: number) => void;
+  addCell: (
+    cellType: 'Markdown' | 'Mermaid' | 'SPARQL' | 'FLUREEQL' | 'Admonition',
+    defaultLedger: string,
+    conn?: string,
+    index?: number
+  ) => void;
+  moveCell: (direction: 'up' | 'down', index: number) => void;
   duplicateCell: (index: number) => void;
   deleteCell: (index: number) => void;
   onChange: (newValue: string) => void;
@@ -51,9 +50,9 @@ const MarkdownCell: React.FC<{
   const [storedValue, setStoredValue] = useState<string>(value);
   const [focused, setFocused] = useState<boolean>(false);
   const [hover, setHover] = useState<boolean>(false);
-  const monacoRef = useRef();
-  const editorRef = useRef();
-  const actionRef = useRef();
+  const monacoRef = useRef<any>();
+  const editorRef = useRef<any>();
+  const actionRef = useRef<HTMLSpanElement>();
 
   const {
     state: { defaultConn: globalConn },
@@ -101,19 +100,19 @@ const MarkdownCell: React.FC<{
         setFocused(false);
       });
 
-      editor.onKeyDown((e) => {
+      editor.onKeyDown((e: KeyboardEvent) => {
         if (e.code === 'F9') {
-          actionRef.current.click();
+          (actionRef.current as HTMLSpanElement).click();
         }
       });
     }
   }
 
   useEffect(() => {
-    let localState = JSON.parse(localStorage.getItem('notebookState'));
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
     let activeNotebookId = localState.activeNotebookId;
     let activeNotebook = localState.notebooks.find(
-      (obj) => obj.id === activeNotebookId
+      (obj: Notebook) => obj.id === activeNotebookId
     );
     if (activeNotebook?.cells[index]?.editing === true) {
       setIsEditing(true);
@@ -122,21 +121,21 @@ const MarkdownCell: React.FC<{
     }
   }, [id]);
 
-  const handleEditorChange = (value) => {
+  const handleEditorChange = (value: any) => {
     onChange(value);
   };
 
   const getDefaultLedger = () => {
     // get local storage
-    let localState = JSON.parse(localStorage.getItem('notebookState'));
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
 
     // get active notebook, index
     let activeNotebookId = localState.activeNotebookId;
     let activeNotebook = localState.notebooks.find(
-      (obj) => obj.id === activeNotebookId
+      (obj: Notebook) => obj.id === activeNotebookId
     );
 
-    let nbConn = '';
+    let nbConn: Conn;
     if (!defaultConn) {
       nbConn = JSON.parse(globalConn);
     } else {
@@ -155,13 +154,15 @@ const MarkdownCell: React.FC<{
     // start editing
     if (!titleCell) {
       setIsEditing(true);
-      let localState = JSON.parse(localStorage.getItem('notebookState'));
+      let localState = JSON.parse(
+        localStorage.getItem('notebookState') || '[]'
+      );
       let activeNotebookId = localState.activeNotebookId;
       let activeNotebookIndex = localState.notebooks.findIndex(
-        (obj) => obj.id === activeNotebookId
+        (obj: Notebook) => obj.id === activeNotebookId
       );
       let activeNotebook = localState.notebooks.find(
-        (obj) => obj.id === activeNotebookId
+        (obj: Notebook) => obj.id === activeNotebookId
       );
       activeNotebook.cells[index].editing = true;
       localState.notebooks[activeNotebookIndex] = activeNotebook;
@@ -179,13 +180,13 @@ const MarkdownCell: React.FC<{
   const stopEditing = () => {
     // stop editing
     setIsEditing(false);
-    let localState = JSON.parse(localStorage.getItem('notebookState'));
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
     let activeNotebookId = localState.activeNotebookId;
     let activeNotebookIndex = localState.notebooks.findIndex(
-      (obj) => obj.id === activeNotebookId
+      (obj: Notebook) => obj.id === activeNotebookId
     );
     let activeNotebook = localState.notebooks.find(
-      (obj) => obj.id === activeNotebookId
+      (obj: Notebook) => obj.id === activeNotebookId
     );
     activeNotebook.cells[index].editing = false;
     localState.notebooks[activeNotebookIndex] = activeNotebook;
@@ -212,12 +213,13 @@ const MarkdownCell: React.FC<{
         <div
           id="monaco-toolbar"
           className={`bg-ui-main-300 dark:bg-ui-neutral-700 bg-opacity-20 dark:bg-opacity-20 px-3 py-[3px] rounded-t-md
-          backdrop-blur transition flex gap-1 z-10
+          backdrop-blur transition flex gap-1
           ${
             focused || hover
               ? ''
               : 'dark:text-ui-neutral-500 text-ui-neutral-600'
           }`}
+          style={{ zIndex: 10000 - index }}
         >
           <IconButton
             onClick={stopEditing}
@@ -286,7 +288,7 @@ const MarkdownCell: React.FC<{
         </div>
       </div>
       <div
-        className="flex flex-row rounded-md border-solid border-2 border-ui-purple-400 border overflow-hidden mr-[23px]"
+        className="flex flex-row rounded-md border-solid border-2 border-ui-purple-400 overflow-hidden mr-[23px]"
         // onDoubleClick={stopEditing}
       >
         <div
@@ -355,13 +357,8 @@ const MarkdownCell: React.FC<{
         components={{
           code({ inline, className, children, ...props }) {
             if (inline) return <code {...props}>{children}</code>;
-
             const value = String(children).replace(/\n$/, '');
-
-            let language = className.replace('language-', '');
-            // if (className === 'language-callout')
-            //   return <Callout>{value}</Callout>;
-
+            let language = className?.replace('language-', '') || '';
             return <CodeBlock language={language} value={value} />;
           },
         }}
