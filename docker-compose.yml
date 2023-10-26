@@ -25,9 +25,9 @@ services:
       - fluree
 
   fluree:
-    image: fluree/http-api-gateway:latest
+    image: fluree/server:latest
     ports:
       - "58090:8090"
     volumes:
-      - "./data:/opt/fluree-http-api-gateway/data"
+      - "./data:/opt/fluree-server/data"
 
