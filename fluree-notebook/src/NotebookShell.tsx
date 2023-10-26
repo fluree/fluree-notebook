@@ -16,6 +16,18 @@ import useFluree from './flureedb/useFluree.js';
 // @ts-ignore
 import { memoryConnOptions } from './flureedb/config.js';
 
+interface PostmanRequest {
+  name: string;
+  request: {
+    method: string;
+    url: {
+      raw: string;
+    };
+    // Add other properties as needed
+  };
+  // Add other properties as needed
+}
+
 export const NotebookShell = (): JSX.Element => {
   const { ledger, stagedDb, committedDb, stage, commit, query } = useFluree(
     'test/jld',
@@ -281,7 +293,9 @@ export const NotebookShell = (): JSX.Element => {
     let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
 
     let newData = JSON.parse(JSON.stringify(stringifiedData));
-    newData = JSON.parse(newData);
+    if (typeof newData === 'string') {
+      newData = JSON.parse(newData);
+    }
     console.log(newData);
     newData.defaultConn = defaultConn;
 
@@ -302,18 +316,15 @@ export const NotebookShell = (): JSX.Element => {
       }
     }
 
-    // if ID already exists...
     let existingNotebook = localState.notebooks.findIndex(
       (obj: NotebookType) => obj.id === newData.id
     );
 
     if (existingNotebook > -1) {
       if (confirm(`Replace existing notebook? (id: ${newData.id})`) === true) {
-        // replace existing...
         localState.notebooks.splice(existingNotebook, 1, newData);
         localState.activeNotebookId = newData.id;
       } else {
-        // assign new id
         newData.id = Math.random().toString(36).substring(7);
         localState.notebooks.push(newData);
         localState.activeNotebookId = newData.id;
@@ -333,37 +344,50 @@ export const NotebookShell = (): JSX.Element => {
     return newVal;
   }
 
-  function convertPostmanToCells(postmanCollection: any) {
+  const convertPostmanToCells = (postmanCollection: any) => {
     const cells: Cell[] = [];
+    const name = postmanCollection.info.name;
+    const postmanId = postmanCollection.info['_postman_id'];
 
     const addItem = (item: PostmanRequest) => {
       const { name, request } = item;
-      const { method, url } = request;
+      const { method, url, header } = request;
 
-      // Create a markdown cell with the request information
+      let language;
+      console.log(header[0].value);
+      if (header[0].value === 'application/sparql-query') {
+        language = 'sparql';
+      } else {
+        language = 'json';
+      }
+
       const markdownValue = `### ${name}\n\n- **Method:** ${method}\n- **URL:** ${url.raw}\n`;
+      // @ts-ignore
       cells.push({ type: 'markdown', value: markdownValue });
 
-      // Assume the body is in JSON format for simplicity
-      // You may need to handle other formats as necessary
       let requestBody;
-      try {
-        requestBody = JSON.stringify(JSON.parse(request.body.raw), null, 2);
-      } catch (e) {
-        console.warn(e);
+      if (language === 'json') {
+        try {
+          // @ts-ignore
+          requestBody = JSON.stringify(JSON.parse(request.body.raw), null, 2);
+        } catch (e) {
+          console.warn(e);
+          // @ts-ignore
+          requestBody = request?.body?.raw;
+        }
+      } else {
         requestBody = request?.body?.raw;
       }
-      cells.push({ type: 'monaco', value: requestBody, language: 'json' });
+
+      // @ts-ignore
+      cells.push({ type: 'monaco', value: requestBody, language });
     };
 
-    // Recursively go through the items and add them to the cells
     const parseItems = (items: any[]) => {
       for (const item of items) {
         if (item.item) {
-          // If the item has nested items, parse them recursively
           parseItems(item.item);
         } else {
-          // Otherwise, add the item to the cells
           addItem(item);
         }
       }
@@ -373,8 +397,8 @@ export const NotebookShell = (): JSX.Element => {
     console.log(cells);
 
     let newNotebook = {
-      id: 'postman',
-      name: 'postman',
+      id: postmanId,
+      name: name,
       defaultConn: defaultConn,
       cells: cells,
     };
@@ -382,9 +406,9 @@ export const NotebookShell = (): JSX.Element => {
     // return cells;
     console.log(newNotebook);
     return newNotebook;
-  }
+  };
 
-  function markdownToJson(markdown: string) {
+  const markdownToJson = (markdown: string) => {
     const lines = markdown.split('\n');
 
     const result: NotebookType = {
@@ -476,7 +500,7 @@ export const NotebookShell = (): JSX.Element => {
     }
 
     return result;
-  }
+  };
 
   const handleAdmonitions = (cells: Array<Cell>) => {
     return cells.reduce((newCells, cell) => {
@@ -620,20 +644,22 @@ export const NotebookShell = (): JSX.Element => {
 
   const drop = (e: DragEvent) => {
     e.preventDefault();
-    for (var i = 0; i < e.dataTransfer.files.length; i++) {
-      let thisFile = e.dataTransfer.files[i];
+    for (const thisFile of e.dataTransfer.files) {
       if (thisFile.type === 'application/json') {
         let reader = new FileReader();
         reader.onload = function (event) {
           if (event.target) {
-            if (JSON.parse(event.target.result).info['_postman_id']) {
+            // @ts-ignore
+            let parsed = JSON.parse(event.target.result);
+            if (parsed.info && parsed.info['_postman_id']) {
+              // @ts-ignore
               let data = convertPostmanToCells(JSON.parse(event.target.result));
               addNotebook(JSON.stringify(data));
             }
             addNotebooks(event.target.result);
           }
         };
-        reader.readAsText(e.dataTransfer.files[i]);
+        reader.readAsText(thisFile);
       } else if (
         thisFile.type === 'text/markdown' ||
         thisFile.name.endsWith('.mdx')
@@ -644,7 +670,7 @@ export const NotebookShell = (): JSX.Element => {
             importMarkdown(event.target.result);
           }
         };
-        reader.readAsText(e.dataTransfer.files[i]);
+        reader.readAsText(thisFile);
       }
     }
   };

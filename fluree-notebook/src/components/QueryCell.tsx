@@ -83,6 +83,7 @@ const QueryCell = ({
     'success' | 'error' | 'warn' | null
   >(null);
   const [focused, setFocused] = useState<boolean>(false);
+  const [ledgerExists, setLedgerExists] = useState(false);
   const [hover, setHover] = useState<boolean>(false);
   const [defaultAction, setDefaultAction] = useState<
     'query' | 'transact' | 'create' | null
@@ -179,7 +180,7 @@ const QueryCell = ({
           if (keys.every((e) => transactKeys.indexOf(e) > -1)) {
             setDefaultAction('transact');
           } else if (keys.every((e) => createKeys.indexOf(e) > -1)) {
-            if (connState.type === 'dataset') {
+            if (connState.type === 'dataset' || ledgerExists) {
               setDefaultAction('transact');
             } else {
               setDefaultAction('create');
@@ -195,6 +196,46 @@ const QueryCell = ({
       }
     }
   }, [value, connState]);
+
+  useEffect(() => {
+    checkLedgerExists();
+  }, [value, connState]);
+
+  const checkLedgerExists = () => {
+    // get local storage
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
+
+    let connCache = localState.connCache;
+    let ledgerFromValue;
+    let parsedValue;
+
+    try {
+      parsedValue = JSON.parse(value);
+      console.log(parsedValue);
+      if (parsedValue.hasOwnProperty('f:ledger')) {
+        ledgerFromValue = parsedValue['f:ledger'];
+      } else if (parsedValue.hasOwnProperty('ledger')) {
+        ledgerFromValue = parsedValue['ledger'];
+      }
+      console.log(connCache);
+      console.log('ledgerFromValue: ' + ledgerFromValue);
+      console.log(ledgerExists);
+
+      if (
+        ledgerFromValue &&
+        !connCache[connState.id].includes(ledgerFromValue)
+      ) {
+        setLedgerExists(false);
+      } else if (
+        ledgerFromValue &&
+        connCache[connState.id].includes(ledgerFromValue)
+      ) {
+        setLedgerExists(true);
+      }
+    } catch (e) {
+      // do nothing
+    }
+  };
 
   const doDefaultAction = (e: KeyboardEvent) => {
     switch (e.code) {
@@ -472,7 +513,17 @@ const QueryCell = ({
           activeNotebook.connCache = {};
         }
 
+        if (!localState.connCache) {
+          localState.connCache = {};
+        }
+
         activeNotebook.connCache[connState.id] = ledger;
+        if (!localState.connCache[connState.id]) {
+          localState.connCache[connState.id] = [];
+        }
+        if (!localState.connCache[connState.id].includes(ledger)) {
+          localState.connCache[connState.id].push(ledger);
+        }
       }
     }
 
@@ -693,28 +744,29 @@ const QueryCell = ({
                 <Bolt />
               </IconButton>
 
-              {!['dataset', 'memory'].includes(connState.type) && (
-                <IconButton
-                  actionRef={defaultAction === 'create' ? actionRef : null}
-                  onClick={() => flureePost('create')}
-                  tooltip={
-                    defaultAction === 'create' && focused
-                      ? 'Create Ledger [F9]'
-                      : 'Create Ledger'
-                  }
-                  className={
-                    defaultAction === 'create'
-                      ? `transition ${
-                          focused || hover
-                            ? 'text-ui-indigo-700 dark:text-ui-indigo-400'
-                            : 'text-ui-indigo-500 dark:text-ui-indigo-500'
-                        }`
-                      : ''
-                  }
-                >
-                  <Plus />
-                </IconButton>
-              )}
+              {!['dataset', 'memory'].includes(connState.type) &&
+                !ledgerExists && (
+                  <IconButton
+                    actionRef={defaultAction === 'create' ? actionRef : null}
+                    onClick={() => flureePost('create')}
+                    tooltip={
+                      defaultAction === 'create' && focused
+                        ? 'Create Ledger [F9]'
+                        : 'Create Ledger'
+                    }
+                    className={
+                      defaultAction === 'create'
+                        ? `transition ${
+                            focused || hover
+                              ? 'text-ui-indigo-700 dark:text-ui-indigo-400'
+                              : 'text-ui-indigo-500 dark:text-ui-indigo-500'
+                          }`
+                        : ''
+                    }
+                  >
+                    <Plus />
+                  </IconButton>
+                )}
             </>
           )}
 
