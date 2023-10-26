@@ -166,7 +166,7 @@ const SidebarItem = ({
   const handleClick = (e: MouseEvent) => {
     if (keyListener['ShiftLeft'] || keyListener['ShiftRight']) {
       let arr = [...selectedNotebooks];
-      if (lastNotebookSelected && lastNotebookSelected < index) {
+      if (lastNotebookSelected !== null && lastNotebookSelected < index) {
         for (var i = index; i >= lastNotebookSelected + 1; i--) {
           let targetCheckbox = document.getElementById(
             `notebook-index-${i}`
@@ -191,7 +191,10 @@ const SidebarItem = ({
         // @ts-ignore
         arr = arr.sort((a, b) => a.index - b.index);
         setSelectedNotebooks(arr);
-      } else if (lastNotebookSelected && lastNotebookSelected > index) {
+      } else if (
+        lastNotebookSelected !== null &&
+        lastNotebookSelected > index
+      ) {
         for (var i = lastNotebookSelected - 1; i >= index; i--) {
           let targetCheckbox = document.getElementById(
             `notebook-index-${i}`

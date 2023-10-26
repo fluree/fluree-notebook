@@ -28,6 +28,7 @@ import { Globe } from './icons/Globe';
 import { Plus } from './icons/Plus';
 import { Search } from './icons/Search';
 import { Sparkles } from './icons/Sparkles';
+import { SampleText } from './icons/SampleText';
 
 export interface IQueryProps {}
 
@@ -83,8 +84,9 @@ const QueryCell = ({
     'success' | 'error' | 'warn' | null
   >(null);
   const [focused, setFocused] = useState<boolean>(false);
-  const [ledgerExists, setLedgerExists] = useState(false);
+  const [ledgerExists, setLedgerExists] = useState(true);
   const [hover, setHover] = useState<boolean>(false);
+  const [sampleData, setSampleData] = useState<boolean>(false);
   const [defaultAction, setDefaultAction] = useState<
     'query' | 'transact' | 'create' | null
   >(null);
@@ -97,8 +99,21 @@ const QueryCell = ({
   axios.defaults.baseURL = 'http://localhost:58090/fluree';
 
   const {
-    state: { defaultConn: globalConn },
+    state: { keyListener, defaultConn: globalConn },
   } = useGlobal();
+
+  const { state } = useGlobal();
+
+  useEffect(() => {
+    console.log(keyListener);
+    if (keyListener['AltLeft'] || keyListener['AltRight']) {
+      setSampleData(true);
+      setLedgerExists(false);
+    } else {
+      setSampleData(false);
+      setLedgerExists(true);
+    }
+  }, [state, keyListener]);
 
   const [connState, setConnState] = useState(
     conn
@@ -124,7 +139,7 @@ const QueryCell = ({
     } else {
       try {
         let keys = Object.keys(JSON.parse(value));
-        let createKeys = [
+        let transactKeys = [
           'context',
           '@context',
           'graph',
@@ -136,21 +151,11 @@ const QueryCell = ({
           'f:defaultContext',
           'https://ns.flur.ee/ledger#defaultContext',
           'insert',
-          'opts',
-        ];
-        let transactKeys = [
-          'context',
-          '@context',
-          'graph',
-          '@graph',
-          'f:ledger',
-          'ledger',
-          'https://ns.flur.ee/ledger#ledger',
-          'insert',
           'f:insert',
           'delete',
           'f:delete',
           'where',
+          'opts',
         ];
         let queryKeys = [
           'select',
@@ -178,12 +183,10 @@ const QueryCell = ({
           }
         } else {
           if (keys.every((e) => transactKeys.indexOf(e) > -1)) {
-            setDefaultAction('transact');
-          } else if (keys.every((e) => createKeys.indexOf(e) > -1)) {
-            if (connState.type === 'dataset' || ledgerExists) {
-              setDefaultAction('transact');
-            } else {
+            if (!ledgerExists && connState.type !== 'dataset') {
               setDefaultAction('create');
+            } else {
+              setDefaultAction('transact');
             }
           } else if (keys.every((e) => queryKeys.indexOf(e) > -1)) {
             setDefaultAction('query');
@@ -195,40 +198,53 @@ const QueryCell = ({
         setDefaultAction(null);
       }
     }
-  }, [value, connState]);
+  }, [value, connState, ledgerExists]);
 
   useEffect(() => {
     checkLedgerExists();
-  }, [value, connState]);
+  }, [value, connState, result]);
+
+  useEffect(() => {
+    window.addEventListener('storage', checkLedgerExists);
+    return () => {
+      window.removeEventListener('storage', checkLedgerExists);
+    };
+  }, []);
+
+  //   useEffect(() => {
+  //     window.dispatchEvent(new Event('storage'));
+  //   }, [ledgerExists])
 
   const checkLedgerExists = () => {
     // get local storage
     let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
-
-    let connCache = localState.connCache;
     let ledgerFromValue;
     let parsedValue;
 
     try {
       parsedValue = JSON.parse(value);
-      console.log(parsedValue);
       if (parsedValue.hasOwnProperty('f:ledger')) {
         ledgerFromValue = parsedValue['f:ledger'];
       } else if (parsedValue.hasOwnProperty('ledger')) {
         ledgerFromValue = parsedValue['ledger'];
       }
-      console.log(connCache);
-      console.log('ledgerFromValue: ' + ledgerFromValue);
-      console.log(ledgerExists);
+
+      if (!localState.connCache) {
+        localState.connCache = {};
+      }
+
+      if (!localState.connCache[connState.id]) {
+        localState.connCache[connState.id] = [];
+      }
 
       if (
         ledgerFromValue &&
-        !connCache[connState.id].includes(ledgerFromValue)
+        !localState.connCache[connState.id].includes(ledgerFromValue)
       ) {
         setLedgerExists(false);
       } else if (
         ledgerFromValue &&
-        connCache[connState.id].includes(ledgerFromValue)
+        localState.connCache[connState.id].includes(ledgerFromValue)
       ) {
         setLedgerExists(true);
       }
@@ -237,6 +253,44 @@ const QueryCell = ({
     }
   };
 
+  const removeFromConnCache = (ledgerName: string) => {
+    try {
+      // get local storage
+      let localState = JSON.parse(
+        localStorage.getItem('notebookState') || '[]'
+      );
+      let connCache = localState.connCache;
+      if (connCache[connState.id].includes(ledgerName)) {
+        connCache[connState.id] = connCache[connState.id].filter(
+          (obj) => obj !== ledgerName
+        );
+      }
+      localState.connCache[connState.id] = connCache[connState.id];
+      localStorage.setItem('notebookState', JSON.stringify(localState));
+      setLedgerExists(false);
+      window.dispatchEvent(new Event('storage'));
+    } catch (e) {
+      console.warn(e);
+    }
+  };
+
+  const addToConnCache = (ledgerName: string) => {
+    // get local storage
+    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
+
+    if (!localState.connCache) {
+      localState.connCache = {};
+    }
+    if (!localState.connCache[connState.id]) {
+      localState.connCache[connState.id] = [];
+    }
+    if (!localState.connCache[connState.id].includes(ledgerName)) {
+      localState.connCache[connState.id].push(ledgerName);
+    }
+    localStorage.setItem('notebookState', JSON.stringify(localState));
+    setLedgerExists(true);
+    window.dispatchEvent(new Event('storage'));
+  };
   const doDefaultAction = (e: KeyboardEvent) => {
     switch (e.code) {
       case 'F9':
@@ -413,6 +467,20 @@ const QueryCell = ({
           }
 
           if (typeof returnedValue === 'object') {
+            const doesNotExistRegex = /Ledger (.+?) does not exist!/;
+            const doesExistRegex = /Ledger (.+?) already exists/;
+            if (returnedValue.error) {
+              const exists = returnedValue.error.match(doesExistRegex);
+              const notExists = returnedValue.error.match(doesNotExistRegex);
+              if (exists) {
+                // remove from connCache
+                addToConnCache(exists[1]);
+              } else if (notExists) {
+                // add to connCache
+                removeFromConnCache(notExists[1]);
+              }
+            }
+
             returnedValue = JSON.stringify(returnedValue, null, 2);
           }
 
@@ -577,6 +645,82 @@ const QueryCell = ({
     });
   };
 
+  const defaultQuery = () => {
+    return JSON.stringify(
+      {
+        from: getDefaultLedger(),
+        select: {
+          '?s': ['*'],
+        },
+        where: [['?s', 'rdf:type', 'rdfs:Class']],
+      },
+      null,
+      2
+    );
+  };
+  const defaultTransaction = () => {
+    return JSON.stringify(
+      {
+        '@context': 'https://ns.flur.ee',
+        ledger: getDefaultLedger(),
+        insert: [
+          {
+            '@id': 'ex:freddy',
+            'foaf:name': 'Freddy',
+          },
+        ],
+      },
+      null,
+      2
+    );
+  };
+  const defaultCreate = () => {
+    return JSON.stringify(
+      {
+        '@context': 'https://ns.flur.ee',
+        ledger: 'newLedger',
+        insert: [
+          {
+            '@id': 'ex:freddy',
+            '@type': 'ex:Yeti',
+            'schema:name': 'Freddy',
+          },
+        ],
+        opts: {
+          defaultContext: {
+            ex: 'http://example.org/',
+            f: 'https://ns.flur.ee/ledger#',
+            foaf: 'http://xmlns.com/foaf/0.1/',
+            owl: 'http://www.w3.org/2002/07/owl#',
+            rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+            rdfs: 'http://www.w3.org/2000/01/rdf-schema#',
+            schema: 'http://schema.org/',
+            sh: 'http://www.w3.org/ns/shacl#',
+            skos: 'http://www.w3.org/2008/05/skos#',
+            wiki: 'https://www.wikidata.org/wiki/',
+            xsd: 'http://www.w3.org/2001/XMLSchema#',
+          },
+        },
+      },
+      null,
+      2
+    );
+  };
+
+  const populateSample = (sampleType: 'query' | 'transaction' | 'create') => {
+    switch (sampleType) {
+      case 'query':
+        onChange(defaultQuery());
+        break;
+      case 'transaction':
+        onChange(defaultTransaction());
+        break;
+      case 'create':
+        onChange(defaultCreate());
+        break;
+    }
+  };
+
   const getDefaultLedger = () => {
     // get local storage
     let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
@@ -599,7 +743,7 @@ const QueryCell = ({
         return activeNotebook.connCache[nbConn.id];
       }
     }
-    return null;
+    return 'ledgerName';
   };
 
   function formatSPARQL(query: string) {
@@ -664,17 +808,17 @@ const QueryCell = ({
             className={`rounded-full h-[25px] w-[27px] relative bottom-[4px] animate-pulse
             ${focused || hover ? '' : 'hidden'}
           ${
-            focused && defaultAction === 'create'
+            !sampleData && focused && defaultAction === 'create'
               ? 'bg-ui-indigo-400 dark:bg-ui-indigo-800 left-[86px]'
               : ''
           }
           ${
-            focused && defaultAction === 'transact'
+            !sampleData && focused && defaultAction === 'transact'
               ? 'bg-ui-yellow-200 dark:bg-ui-yellow-800 left-[50px]'
               : ''
           }
           ${
-            focused && defaultAction === 'query'
+            !sampleData && focused && defaultAction === 'query'
               ? 'bg-ui-main-300 dark:bg-ui-main-800 left-[14px]'
               : ''
           }
@@ -697,15 +841,21 @@ const QueryCell = ({
           <IconButton
             actionRef={defaultAction === 'query' ? actionRef : null}
             onClick={
-              connState.type === 'memory'
+              sampleData && language === 'json'
+                ? () => populateSample('query')
+                : connState.type === 'memory'
                 ? () => memQuery(value, setResultState)
                 : () => flureePost('query')
             }
             tooltip={
-              defaultAction === 'query' && focused ? 'Query [F9]' : 'Query'
+              sampleData && language === 'json'
+                ? 'Populate Sample Query'
+                : defaultAction === 'query' && focused
+                ? 'Query [F9]'
+                : 'Query'
             }
             className={
-              defaultAction === 'query'
+              defaultAction === 'query' || sampleData
                 ? `transition ${
                     focused || hover
                       ? 'text-ui-main-600 dark:text-ui-main-300'
@@ -715,6 +865,11 @@ const QueryCell = ({
             }
           >
             <Search />
+            {sampleData && language === 'json' && (
+              <span className="absolute text-[snow] -right-[4px] -top-[1px] flex w-[13px] h-[13px]">
+                <SampleText className="w-2 h-2" />
+              </span>
+            )}
           </IconButton>
 
           {language !== 'sparql' && (
@@ -722,17 +877,21 @@ const QueryCell = ({
               <IconButton
                 actionRef={defaultAction === 'transact' ? actionRef : null}
                 onClick={
-                  connState.type === 'memory'
+                  sampleData
+                    ? () => populateSample('transaction')
+                    : connState.type === 'memory'
                     ? () => memTransact(value, setResultState)
                     : () => flureePost('transact')
                 }
                 tooltip={
-                  defaultAction === 'transact' && focused
+                  sampleData
+                    ? 'Populate Sample Transaction'
+                    : defaultAction === 'transact' && focused
                     ? 'Transact [F9]'
                     : 'Transact'
                 }
                 className={
-                  defaultAction === 'transact'
+                  defaultAction === 'transact' || sampleData
                     ? `transition ${
                         focused || hover
                           ? 'text-ui-yellow-400 dark:text-ui-yellow-300'
@@ -742,20 +901,31 @@ const QueryCell = ({
                 }
               >
                 <Bolt />
+                {sampleData && (
+                  <span className="absolute text-[snow] -right-[4px] -top-[1px] flex w-[13px] h-[13px]">
+                    <SampleText className="w-2 h-2" />
+                  </span>
+                )}
               </IconButton>
 
               {!['dataset', 'memory'].includes(connState.type) &&
                 !ledgerExists && (
                   <IconButton
                     actionRef={defaultAction === 'create' ? actionRef : null}
-                    onClick={() => flureePost('create')}
+                    onClick={
+                      sampleData
+                        ? () => populateSample('create')
+                        : () => flureePost('create')
+                    }
                     tooltip={
-                      defaultAction === 'create' && focused
+                      sampleData
+                        ? 'Populate Sample Creation'
+                        : defaultAction === 'create' && focused
                         ? 'Create Ledger [F9]'
                         : 'Create Ledger'
                     }
                     className={
-                      defaultAction === 'create'
+                      defaultAction === 'create' || sampleData
                         ? `transition ${
                             focused || hover
                               ? 'text-ui-indigo-700 dark:text-ui-indigo-400'
@@ -765,6 +935,11 @@ const QueryCell = ({
                     }
                   >
                     <Plus />
+                    {sampleData && (
+                      <span className="absolute text-[snow] -right-[4px] -top-[1px] flex w-[13px] h-[13px]">
+                        <SampleText className="w-2 h-2" />
+                      </span>
+                    )}
                   </IconButton>
                 )}
             </>

@@ -144,8 +144,6 @@ const deleteCell = (index: number) => {
     }
   }
 
-  console.log(result);
-
   if (result.length === 1) {
     activeNotebook.defaultConn = result[0];
   }

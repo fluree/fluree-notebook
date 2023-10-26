@@ -57,7 +57,6 @@ const SidebarMenu = ({
       if (cell.type === 'monaco' && cell.language === 'json') {
         let value = JSON.parse(cell.value);
         if (value.query) {
-          console.log(value);
           // @ts-ignore
           newValue.from = value.ledger;
           let oldQuery = { ...value.query };
@@ -65,10 +64,8 @@ const SidebarMenu = ({
             ...newValue,
             ...oldQuery,
           };
-          console.log(newValue);
           thisNotebook.cells[i].value = JSON.stringify(newValue, null, 2);
         } else if (value.txn) {
-          console.log(value);
           // @ts-ignore
           newValue['f:ledger'] = value.ledger;
           // if txn contains @graph
@@ -92,7 +89,6 @@ const SidebarMenu = ({
             // @ts-ignore
             newValue['@graph'] = [{ ...value.txn }];
           }
-          console.log(newValue);
           thisNotebook.cells[i].value = JSON.stringify(newValue, null, 2);
         } else if (!value.from && !value['f:ledger']) {
           thisNotebook.cells[i].deleteMe = true;

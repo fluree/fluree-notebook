@@ -122,8 +122,6 @@ const Sidebar = ({
         data += `\n`;
       }
 
-      console.log(data);
-
       let filename = `${fileName}.md`;
       let file = new Blob([data], { type: 'markdown' });
 
@@ -211,7 +209,6 @@ const Sidebar = ({
   };
 
   const handleUploadJSON = (e: BaseSyntheticEvent) => {
-    console.log(e);
     for (var i = 0; i < e.target.files.length; i++) {
       let thisFile = e.target.files[i];
       if (thisFile.type === 'application/json') {
@@ -227,7 +224,6 @@ const Sidebar = ({
         reader.onload = function (event) {
           if (event.target) {
             importMarkdown(event.target.result);
-            console.log(event.target.result);
           }
         };
         reader.readAsText(thisFile);

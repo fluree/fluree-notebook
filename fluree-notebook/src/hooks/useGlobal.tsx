@@ -30,7 +30,7 @@ const GlobalContext = createContext<
 >(undefined);
 
 function globalReducer(state: GlobalState, action: GlobalAction): GlobalState {
-  return { ...state, [action.type]: action.value };
+  return { ...JSON.parse(JSON.stringify(state)), [action.type]: action.value };
 }
 
 interface GlobalProviderProps {

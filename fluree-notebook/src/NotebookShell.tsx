@@ -107,8 +107,13 @@ export const NotebookShell = (): JSX.Element => {
   } = useGlobal();
 
   const updateGlobalKey = (val: any) => {
+    console.log('was called...');
     dispatch({ type: 'keyListener', value: val });
   };
+
+  //   useEffect(() => {
+  //     console.log(keyListener);
+  //   }, [keyListener]);
 
   const globalListener = (e: KeyboardEvent) => {
     const listenKeys = ['AltLeft', 'AltRight', 'ShiftLeft', 'ShiftRight'];
@@ -296,7 +301,6 @@ export const NotebookShell = (): JSX.Element => {
     if (typeof newData === 'string') {
       newData = JSON.parse(newData);
     }
-    console.log(newData);
     newData.defaultConn = defaultConn;
 
     if (!newData.cells[0].titleCell) {
@@ -354,7 +358,6 @@ export const NotebookShell = (): JSX.Element => {
       const { method, url, header } = request;
 
       let language;
-      console.log(header[0].value);
       if (header[0].value === 'application/sparql-query') {
         language = 'sparql';
       } else {
@@ -394,8 +397,6 @@ export const NotebookShell = (): JSX.Element => {
     };
 
     parseItems(postmanCollection.item);
-    console.log(cells);
-
     let newNotebook = {
       id: postmanId,
       name: name,
@@ -404,7 +405,6 @@ export const NotebookShell = (): JSX.Element => {
     };
 
     // return cells;
-    console.log(newNotebook);
     return newNotebook;
   };
 
@@ -585,8 +585,6 @@ export const NotebookShell = (): JSX.Element => {
 
     let newData = markdownToJson(data);
     newData.defaultConn = defaultConn;
-
-    console.log(newData);
 
     // Handle Admonition components
     if (newData.cells) {
