@@ -12,11 +12,11 @@ import {
 
 import useGlobal from '../hooks/useGlobal';
 import { Notebook } from '../types';
-import SidebarMenu from './sidebar-menu';
-import IconButton from './buttons/icon-button';
+import SidebarMenu from './SidebarMenu';
+import IconButton from './buttons/IconButton';
 
-import { Bars2 } from './icons/bars-2';
-import { EllipsisVertical } from './icons/ellipsisVertical';
+import { Bars2 } from './icons/Bars2';
+import { EllipsisVertical } from './icons/EllipsisVertical';
 
 const SidebarItem = ({
   id,

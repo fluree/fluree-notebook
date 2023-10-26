@@ -3,11 +3,11 @@ import { Menu, Transition } from '@headlessui/react';
 import useGlobal from '../hooks/useGlobal';
 import { Conn, Notebook } from '../types';
 
-import { Cube } from './icons/cube';
-import { Cloud } from './icons/cloud';
-import { Connections } from './icons/connections';
-import { CheckCircle } from './icons/checkCircle';
-import { Globe } from './icons/globe';
+import { Cube } from './icons/Cube';
+import { Cloud } from './icons/Cloud';
+import { Connections } from './icons/Connections';
+import { CheckCircle } from './icons/CheckCircle';
+import { Globe } from './icons/Globe';
 
 const ConnectionMenu = ({
   cellIndex,

@@ -1,9 +1,9 @@
-import { ThemeToggle } from './buttons/theme-toggle';
-import IconButton from './buttons/icon-button';
+import { ThemeToggle } from './buttons/ThemeToggle';
+import IconButton from './buttons/IconButton';
 import useGlobal from '../hooks/useGlobal';
 
-import { Connections } from './icons/connections';
-import { Fluree } from './icons/fluree';
+import { Connections } from './icons/Connections';
+import { Fluree } from './icons/Fluree';
 
 export const MainNav = (): JSX.Element => {
   const { dispatch } = useGlobal();

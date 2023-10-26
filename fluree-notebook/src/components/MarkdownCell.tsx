@@ -5,18 +5,18 @@ import remarkGfm from 'remark-gfm';
 
 import useGlobal from '../hooks/useGlobal';
 import { Conn, Notebook } from '../types';
-import AddCellMenu from './add-cell-menu';
-import IconButton from './buttons/icon-button';
-import CodeBlock from '../codeblock';
+import AddCellMenu from './AddCellMenu';
+import IconButton from './buttons/IconButton';
+import CodeBlock from '../Codeblock';
 
-import { ArrowDown } from './icons/arrowDown';
-import { ArrowUp } from './icons/arrowUp';
-import { Cancel } from './icons/cancel';
-import { Check } from './icons/check';
-import { Delete } from './icons/delete';
-import { Duplicate } from './icons/duplicate';
-import { DocumentDown } from './icons/document-down';
-import { DocumentUp } from './icons/document-up';
+import { ArrowDown } from './icons/ArrowDown';
+import { ArrowUp } from './icons/ArrowUp';
+import { Cancel } from './icons/Cancel';
+import { Check } from './icons/Check';
+import { Delete } from './icons/Delete';
+import { Duplicate } from './icons/Duplicate';
+import { DocumentDown } from './icons/DocumentDown';
+import { DocumentUp } from './icons/DocumentUp';
 
 const MarkdownCell: React.FC<{
   id: string;

@@ -1,12 +1,12 @@
 import { Fragment, useState } from 'react';
 import { Menu, Transition } from '@headlessui/react';
 
-import { Sparql } from './icons/sparql';
-import { Wave1 } from './icons/wave1';
-import { Wave2 } from './icons/wave2';
-import { Mermaid } from './icons/mermaid';
-import { Markdown } from './icons/markdown';
-import { Caution } from './icons/caution';
+import { Sparql } from './icons/Sparql';
+import { Wave1 } from './icons/Wave1';
+import { Wave2 } from './icons/Wave2';
+import { Mermaid } from './icons/Mermaid';
+import { Markdown } from './icons/Markdown';
+import { Caution } from './icons/Caution';
 
 const AddCellMenu = ({
   addCell,

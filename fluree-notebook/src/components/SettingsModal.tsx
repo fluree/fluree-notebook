@@ -2,15 +2,15 @@ import { Fragment, useRef, useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 
 import useGlobal from '../hooks/useGlobal';
-import DatasetsGrid from './datasets-grid';
-import InstancesGrid from './instances-grid';
-import IconButton from './buttons/icon-button';
-import ConnectionMenu from './conn-menu';
+import DatasetsGrid from './DatasetsGrid';
+import InstancesGrid from './InstancesGrid';
+import IconButton from './buttons/IconButton';
+import ConnectionMenu from './ConnectionMenu';
 
-import { Cloud } from './icons/cloud';
-import { Cube } from './icons/cube';
-import { Globe } from './icons/globe';
-import { XMark } from './icons/x-mark';
+import { Cloud } from './icons/Cloud';
+import { Cube } from './icons/Cube';
+import { Globe } from './icons/Globe';
+import { XMark } from './icons/Xmark';
 
 const SettingsModal = () => {
   const {

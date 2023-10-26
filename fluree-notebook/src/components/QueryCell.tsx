@@ -4,30 +4,30 @@ import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-import AddCellMenu from './add-cell-menu';
-import ConnectionMenu from './conn-menu';
-import IconButton from './buttons/icon-button';
-import MonacoCell from '../monaco-cell';
+import AddCellMenu from './AddCellMenu';
+import ConnectionMenu from './ConnectionMenu';
+import IconButton from './buttons/IconButton';
+import MonacoCell from '../MonacoCell';
 
 import useGlobal from '../hooks/useGlobal';
 import { Conn, Notebook } from '../types';
 
-import { ArrowUturnLeft } from './icons/arrowUturnLeft';
-import { ArrowUp } from './icons/arrowUp';
-import { ArrowDown } from './icons/arrowDown';
-import { Bolt } from './icons/bolt';
-import { Check } from './icons/check';
-import { Clipboard } from './icons/clipboard';
-import { Cloud } from './icons/cloud';
-import { Cube } from './icons/cube';
-import { Delete } from './icons/delete';
-import { DocumentDown } from './icons/document-down';
-import { DocumentUp } from './icons/document-up';
-import { Duplicate } from './icons/duplicate';
-import { Globe } from './icons/globe';
-import { Plus } from './icons/plus';
-import { Search } from './icons/search';
-import { Sparkles } from './icons/sparkles';
+import { ArrowUturnLeft } from './icons/ArrowUturnLeft';
+import { ArrowUp } from './icons/ArrowUp';
+import { ArrowDown } from './icons/ArrowDown';
+import { Bolt } from './icons/Bolt';
+import { Check } from './icons/Check';
+import { Clipboard } from './icons/Clipboard';
+import { Cloud } from './icons/Cloud';
+import { Cube } from './icons/Cube';
+import { Delete } from './icons/Delete';
+import { DocumentDown } from './icons/DocumentDown';
+import { DocumentUp } from './icons/DocumentUp';
+import { Duplicate } from './icons/Duplicate';
+import { Globe } from './icons/Globe';
+import { Plus } from './icons/Plus';
+import { Search } from './icons/Search';
+import { Sparkles } from './icons/Sparkles';
 
 export interface IQueryProps {}
 
@@ -129,10 +129,13 @@ const QueryCell = ({
           'graph',
           '@graph',
           'f:ledger',
+          'ledger',
           'https://ns.flur.ee/ledger#ledger',
           'defaultContext',
           'f:defaultContext',
           'https://ns.flur.ee/ledger#defaultContext',
+          'insert',
+          'opts',
         ];
         let transactKeys = [
           'context',
@@ -140,7 +143,13 @@ const QueryCell = ({
           'graph',
           '@graph',
           'f:ledger',
+          'ledger',
           'https://ns.flur.ee/ledger#ledger',
+          'insert',
+          'f:insert',
+          'delete',
+          'f:delete',
+          'where',
         ];
         let queryKeys = [
           'select',

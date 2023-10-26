@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 
-import IconButton from './components/buttons/icon-button';
-import { Clipboard } from './components/icons/clipboard';
-import { Check } from './components/icons/check';
+import IconButton from './components/buttons/IconButton';
+import { Clipboard } from './components/icons/Clipboard';
+import { Check } from './components/icons/Check';
 
 // @ts-ignore
 import codeblockTheme from './codeblockTheme';

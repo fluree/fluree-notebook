@@ -1,7 +1,7 @@
 import { useState, useEffect, KeyboardEvent, DragEvent } from 'react';
-import { MainNav } from './components/main-nav.tsx';
-import Sidebar from './components/sidebar.tsx';
-import Notebook from './notebook.tsx';
+import { MainNav } from './components/MainNav.tsx';
+import Sidebar from './components/Sidebar.tsx';
+import Notebook from './Notebook.tsx';
 import useGlobal from './hooks/useGlobal.tsx';
 
 import type {
@@ -12,9 +12,9 @@ import type {
 } from './types/index';
 
 // @ts-ignore
-import useFluree from './flureedb/useFluree';
+import useFluree from './flureedb/useFluree.js';
 // @ts-ignore
-import { memoryConnOptions } from './flureedb/config';
+import { memoryConnOptions } from './flureedb/config.js';
 
 export const NotebookShell = (): JSX.Element => {
   const { ledger, stagedDb, committedDb, stage, commit, query } = useFluree(
@@ -281,6 +281,8 @@ export const NotebookShell = (): JSX.Element => {
     let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
 
     let newData = JSON.parse(JSON.stringify(stringifiedData));
+    newData = JSON.parse(newData);
+    console.log(newData);
     newData.defaultConn = defaultConn;
 
     if (!newData.cells[0].titleCell) {
@@ -329,6 +331,57 @@ export const NotebookShell = (): JSX.Element => {
   function removeTrailingNewline(str: string) {
     let newVal = str.endsWith('\n') ? str.slice(0, -1) : str;
     return newVal;
+  }
+
+  function convertPostmanToCells(postmanCollection: any) {
+    const cells: Cell[] = [];
+
+    const addItem = (item: PostmanRequest) => {
+      const { name, request } = item;
+      const { method, url } = request;
+
+      // Create a markdown cell with the request information
+      const markdownValue = `### ${name}\n\n- **Method:** ${method}\n- **URL:** ${url.raw}\n`;
+      cells.push({ type: 'markdown', value: markdownValue });
+
+      // Assume the body is in JSON format for simplicity
+      // You may need to handle other formats as necessary
+      let requestBody;
+      try {
+        requestBody = JSON.stringify(JSON.parse(request.body.raw), null, 2);
+      } catch (e) {
+        console.warn(e);
+        requestBody = request?.body?.raw;
+      }
+      cells.push({ type: 'monaco', value: requestBody, language: 'json' });
+    };
+
+    // Recursively go through the items and add them to the cells
+    const parseItems = (items: any[]) => {
+      for (const item of items) {
+        if (item.item) {
+          // If the item has nested items, parse them recursively
+          parseItems(item.item);
+        } else {
+          // Otherwise, add the item to the cells
+          addItem(item);
+        }
+      }
+    };
+
+    parseItems(postmanCollection.item);
+    console.log(cells);
+
+    let newNotebook = {
+      id: 'postman',
+      name: 'postman',
+      defaultConn: defaultConn,
+      cells: cells,
+    };
+
+    // return cells;
+    console.log(newNotebook);
+    return newNotebook;
   }
 
   function markdownToJson(markdown: string) {
@@ -573,6 +626,10 @@ export const NotebookShell = (): JSX.Element => {
         let reader = new FileReader();
         reader.onload = function (event) {
           if (event.target) {
+            if (JSON.parse(event.target.result).info['_postman_id']) {
+              let data = convertPostmanToCells(JSON.parse(event.target.result));
+              addNotebook(JSON.stringify(data));
+            }
             addNotebooks(event.target.result);
           }
         };

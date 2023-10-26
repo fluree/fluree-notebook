@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { GlobalProvider } from './hooks/useGlobal';
-import { NotebookShell } from './notebook-shell';
-import SettingsModal from './components/settings-modal.js';
+import { NotebookShell } from './NotebookShell.js';
+import SettingsModal from './components/SettingsModal.js';
 import 'react-tippy/dist/tippy.css';
 
 function App() {

@@ -9,8 +9,8 @@ import {
   TrashIcon,
 } from '@heroicons/react/20/solid';
 
-import { Markdown } from './icons/markdown';
-import { Refresh } from './icons/refresh';
+import { Markdown } from './icons/Markdown';
+import { Refresh } from './icons/Refresh';
 
 const SidebarMenu = ({
   id,

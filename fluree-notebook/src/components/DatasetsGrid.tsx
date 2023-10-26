@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import ConnectionRow from './datasets-row';
+import ConnectionRow from './ConnectionRow';
 import { Conn } from '../types';
 
 const DatasetsGrid = () => {

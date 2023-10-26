@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
-import type { Cell, NotebookProps, Notebook, Conn } from './types/index.d.ts';
+import type { Cell, NotebookProps, Notebook, Conn } from './types/index';
 import useGlobal from './hooks/useGlobal.tsx';
 
-import QueryCell from './components/query-cell.tsx';
-import MarkdownCell from './components/markdown-cell.tsx';
-import MermaidCell from './components/mermaid-cell.tsx';
-import AdmonitionCell from './components/admonition-cell.tsx';
-import AddCell from './components/buttons/add-cell.tsx';
+import QueryCell from './components/QueryCell.tsx';
+import MarkdownCell from './components/MarkdownCell.tsx';
+import MermaidCell from './components/MermaidCell.tsx';
+import AdmonitionCell from './components/AdmonitionCell.tsx';
+import AddCell from './components/buttons/AddCell.tsx';
 
 interface CellProps {
   id: string;

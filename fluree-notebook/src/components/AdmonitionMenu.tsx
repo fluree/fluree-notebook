@@ -2,11 +2,11 @@ import { Fragment } from 'react';
 import { Menu, Transition } from '@headlessui/react';
 import { Notebook } from '../types';
 
-import { Caution } from './icons/caution';
-import { CheckCircle } from './icons/checkCircle';
-import { ExclamationCircle } from './icons/exclamationCircle';
-import { Info } from './icons/info';
-import { LightBulb } from './icons/lightBulb';
+import { Caution } from './icons/Caution';
+import { CheckCircle } from './icons/CheckCircle';
+import { ExclamationCircle } from './icons/ExclamationCircle';
+import { Info } from './icons/Info';
+import { LightBulb } from './icons/LightBulb';
 
 const AdmonitionMenu = ({
   cellIndex,

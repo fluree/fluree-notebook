@@ -48,18 +48,22 @@ const MonacoCell: React.FC<{
   }, [value]);
 
   const handleChange = () => {
-    let lines = (value.match(/\n/g) || []).length;
-    lines++;
-    let pixels = 18 * lines + 20;
-    /* Lines below set min & max height for editor */
-    //
-    // if (pixels < 110) {
-    //   pixels = 110;
-    // }
-    // if (pixels > 488) {
-    //   pixels = 488;
-    // }
-    setHeight(pixels);
+    try {
+      let lines = (value.match(/\n/g) || []).length;
+      lines++;
+      let pixels = 18 * lines + 20;
+      /* Lines below set min & max height for editor */
+      //
+      // if (pixels < 110) {
+      //   pixels = 110;
+      // }
+      // if (pixels > 488) {
+      //   pixels = 488;
+      // }
+      setHeight(pixels);
+    } catch (e) {
+      console.warn(e);
+    }
   };
 
   function setEditorTheme(editor: any, monaco: any) {

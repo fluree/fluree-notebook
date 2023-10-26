@@ -1,18 +1,18 @@
 import { useState, useEffect, BaseSyntheticEvent } from 'react';
 
 import { Notebook } from '../types';
-import SidebarItem from './sidebar-item';
-import IconButton from './buttons/icon-button';
+import SidebarItem from './SidebarItem';
+import IconButton from './buttons/IconButton';
 
-import { AddEllipse } from './icons/addEllipse';
-import { BarGraph } from './icons/barGraph';
-import { Check } from './icons/check';
-import { CodeBracket } from './icons/code-bracket';
-import { Delete } from './icons/delete';
-import { Markdown } from './icons/markdown';
-import { SelectMultiple } from './icons/selectMultiple';
-import { Upload } from './icons/upload';
-import { XMark } from './icons/x-mark';
+import { AddEllipse } from './icons/AddEllipse';
+import { BarGraph } from './icons/BarGraph';
+import { Check } from './icons/Check';
+import { CodeBracket } from './icons/CodeBracket';
+import { Delete } from './icons/Delete';
+import { Markdown } from './icons/Markdown';
+import { SelectMultiple } from './icons/SelectMultiple';
+import { Upload } from './icons/Upload';
+import { XMark } from './icons/Xmark';
 
 const Sidebar = ({
   notebooks,
@@ -105,9 +105,14 @@ const Sidebar = ({
           data += '```';
           data += `${activeCell.language} \n`;
           if (activeCell.language === 'json') {
-            data += JSON.stringify(JSON.parse(activeCell.value), null, 2);
+            try {
+              data += JSON.stringify(JSON.parse(activeCell.value), null, 2);
+            } catch (e) {
+              console.warn(e);
+              data += activeCell.value;
+            }
           } else {
-            activeCell.value.endsWith('\n')
+            activeCell.value?.endsWith('\n')
               ? (data += activeCell.value.slice(0, -1))
               : (data += activeCell.value);
           }

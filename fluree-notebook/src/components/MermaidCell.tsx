@@ -5,17 +5,17 @@ import initEditor from 'monaco-mermaid';
 import useGlobal from '../hooks/useGlobal';
 import { Conn, Notebook } from '../types';
 
-import IconButton from './buttons/icon-button';
-import AddCellMenu from './add-cell-menu';
+import IconButton from './buttons/IconButton';
+import AddCellMenu from './AddCellMenu';
 
-import { Check } from './icons/check';
-import { Delete } from './icons/delete';
-import { ArrowUp } from './icons/arrowUp';
-import { ArrowDown } from './icons/arrowDown';
-import { Duplicate } from './icons/duplicate';
-import { DocumentUp } from './icons/document-up';
-import { DocumentDown } from './icons/document-down';
-import { Cancel } from './icons/cancel';
+import { Check } from './icons/Check';
+import { Delete } from './icons/Delete';
+import { ArrowUp } from './icons/ArrowUp';
+import { ArrowDown } from './icons/ArrowDown';
+import { Duplicate } from './icons/Duplicate';
+import { DocumentUp } from './icons/DocumentUp';
+import { DocumentDown } from './icons/DocumentDown';
+import { Cancel } from './icons/Cancel';
 
 // @ts-ignore
 import { Mermaid } from 'mdx-mermaid/Mermaid';

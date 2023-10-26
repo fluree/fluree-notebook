@@ -1,5 +1,5 @@
-import AddCellMenu from '../add-cell-menu';
-import { Plus } from '../icons/plus';
+import AddCellMenu from '../AddCellMenu';
+import { Plus } from '../icons/Plus';
 
 export const Line = (): JSX.Element => {
   return (

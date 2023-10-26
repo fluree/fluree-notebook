@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import useGlobal from '../../hooks/useGlobal';
+import useGlobal from '../../hooks/useGlobal.js';
 
-import IconButton from './icon-button.js';
+import IconButton from './IconButton.js';
 
-import { Moon } from '../icons/moon';
-import { Sun } from '../icons/sun';
+import { Moon } from '../icons/Moon.js';
+import { Sun } from '../icons/Sun.js';
 
 export const ThemeToggle = (): JSX.Element => {
   const [theme, setTheme] = useState(localStorage.getItem('theme'));

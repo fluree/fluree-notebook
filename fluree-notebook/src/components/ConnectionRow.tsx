@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, KeyboardEvent, MouseEvent } from 'react';
-import IconButton from './buttons/icon-button';
+import IconButton from './buttons/IconButton';
 import { Conn } from '../types';
 
-import { Check } from './icons/check';
-import { Delete } from './icons/delete';
-import { PencilSquare } from './icons/pencil-square';
-import { XMark } from './icons/x-mark';
+import { Check } from './icons/Check';
+import { Delete } from './icons/Delete';
+import { PencilSquare } from './icons/PencilSquare';
+import { XMark } from './icons/Xmark';
 
 const ConnectionRow = ({
   row,

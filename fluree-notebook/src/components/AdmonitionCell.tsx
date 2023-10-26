@@ -6,23 +6,23 @@ import remarkGfm from 'remark-gfm';
 import { Notebook, Conn } from '../types';
 import useGlobal from '../hooks/useGlobal';
 
-import IconButton from './buttons/icon-button';
-import AddCellMenu from './add-cell-menu';
-import CodeBlock from '../codeblock';
-import AdmonitionMenu from './admonition-menu';
+import IconButton from './buttons/IconButton';
+import AddCellMenu from './AddCellMenu';
+import CodeBlock from '../Codeblock';
+import AdmonitionMenu from './AdmonitionMenu';
 
-import { ArrowUp } from './icons/arrowUp';
-import { ArrowDown } from './icons/arrowDown';
-import { Cancel } from './icons/cancel';
-import { Caution } from './icons/caution';
-import { Check } from './icons/check';
-import { Delete } from './icons/delete';
-import { DocumentUp } from './icons/document-up';
-import { DocumentDown } from './icons/document-down';
-import { Duplicate } from './icons/duplicate';
-import { ExclamationCircle } from './icons/exclamationCircle';
-import { LightBulb } from './icons/lightBulb';
-import { Info } from './icons/info';
+import { ArrowUp } from './icons/ArrowUp';
+import { ArrowDown } from './icons/ArrowDown';
+import { Cancel } from './icons/Cancel';
+import { Caution } from './icons/Caution';
+import { Check } from './icons/Check';
+import { Delete } from './icons/Delete';
+import { DocumentUp } from './icons/DocumentUp';
+import { DocumentDown } from './icons/DocumentDown';
+import { Duplicate } from './icons/Duplicate';
+import { ExclamationCircle } from './icons/ExclamationCircle';
+import { LightBulb } from './icons/LightBulb';
+import { Info } from './icons/Info';
 
 const AdmonitionCell: React.FC<{
   id: string;
