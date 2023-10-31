@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import axios from 'axios';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
-import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import AddCellMenu from './AddCellMenu';
@@ -29,6 +28,10 @@ import { Plus } from './icons/Plus';
 import { Search } from './icons/Search';
 import { Sparkles } from './icons/Sparkles';
 import { SampleText } from './icons/SampleText';
+import { Mermaid } from './icons/Mermaid';
+import MermaidCell from './MermaidCell';
+import { Flake } from './icons/Flake';
+import { Resize1 } from './icons/Resize1';
 
 export interface IQueryProps {}
 
@@ -83,9 +86,12 @@ const QueryCell = ({
   const [resultStatusState, setResultStatusState] = useState<
     'success' | 'error' | 'warn' | null
   >(null);
+  const [resultMermaidState, setResultMermaidState] = useState('');
+  const [showResultMermaid, setShowResultMermaid] = useState(false);
   const [focused, setFocused] = useState<boolean>(false);
   const [ledgerExists, setLedgerExists] = useState(true);
   const [hover, setHover] = useState<boolean>(false);
+  const [height, setHeight] = useState(0);
   const [sampleData, setSampleData] = useState<boolean>(false);
   const [defaultAction, setDefaultAction] = useState<
     'query' | 'transact' | 'create' | null
@@ -102,18 +108,16 @@ const QueryCell = ({
     state: { keyListener, defaultConn: globalConn },
   } = useGlobal();
 
-  const { state } = useGlobal();
-
   useEffect(() => {
-    console.log(keyListener);
     if (keyListener['AltLeft'] || keyListener['AltRight']) {
       setSampleData(true);
       setLedgerExists(false);
     } else {
       setSampleData(false);
-      setLedgerExists(true);
+      //   setLedgerExists(true);
+      checkLedgerExists();
     }
-  }, [state, keyListener]);
+  }, [keyListener]);
 
   const [connState, setConnState] = useState(
     conn
@@ -174,8 +178,9 @@ const QueryCell = ({
           'orderBy',
           'having',
           'values',
+          'vars',
         ];
-        if (connState.type === 'memory') {
+        if (connState.type === 'memory' || connState.type === 'v2instance') {
           if (keys.every((e) => queryKeys.indexOf(e) > -1)) {
             setDefaultAction('query');
           } else {
@@ -215,9 +220,24 @@ const QueryCell = ({
   //     window.dispatchEvent(new Event('storage'));
   //   }, [ledgerExists])
 
+  useEffect(() => {
+    if (showResultMermaid) {
+      setTimeout(() => {
+        let mermaidContainer = document.querySelector(
+          `#${id}-mermaid .mermaid`
+        );
+        console.log('MERMAID CONTAINER:');
+        console.log(mermaidContainer);
+        let containerHeight = mermaidContainer.clientHeight + 60;
+        console.log('height is: ' + containerHeight);
+        setHeight(containerHeight);
+      }, 200);
+    }
+  }, [showResultMermaid]);
+
   const checkLedgerExists = () => {
     // get local storage
-    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
+    let localState = JSON.parse(localStorage.getItem('connCache') || '{}');
     let ledgerFromValue;
     let parsedValue;
 
@@ -227,24 +247,26 @@ const QueryCell = ({
         ledgerFromValue = parsedValue['f:ledger'];
       } else if (parsedValue.hasOwnProperty('ledger')) {
         ledgerFromValue = parsedValue['ledger'];
+      } else if (parsedValue.hasOwnProperty('from')) {
+        ledgerFromValue = parsedValue['from'];
       }
 
-      if (!localState.connCache) {
-        localState.connCache = {};
+      if (!localState) {
+        localState = {};
       }
 
-      if (!localState.connCache[connState.id]) {
-        localState.connCache[connState.id] = [];
+      if (!localState[connState.id]) {
+        localState[connState.id] = [];
       }
 
       if (
         ledgerFromValue &&
-        !localState.connCache[connState.id].includes(ledgerFromValue)
+        !localState[connState.id].includes(ledgerFromValue)
       ) {
         setLedgerExists(false);
       } else if (
         ledgerFromValue &&
-        localState.connCache[connState.id].includes(ledgerFromValue)
+        localState[connState.id].includes(ledgerFromValue)
       ) {
         setLedgerExists(true);
       }
@@ -256,17 +278,13 @@ const QueryCell = ({
   const removeFromConnCache = (ledgerName: string) => {
     try {
       // get local storage
-      let localState = JSON.parse(
-        localStorage.getItem('notebookState') || '[]'
-      );
-      let connCache = localState.connCache;
-      if (connCache[connState.id].includes(ledgerName)) {
-        connCache[connState.id] = connCache[connState.id].filter(
+      let localState = JSON.parse(localStorage.getItem('connCache') || '{}');
+      if (localState[connState.id].includes(ledgerName)) {
+        localState[connState.id] = localState[connState.id].filter(
           (obj) => obj !== ledgerName
         );
       }
-      localState.connCache[connState.id] = connCache[connState.id];
-      localStorage.setItem('notebookState', JSON.stringify(localState));
+      localStorage.setItem('connCache', JSON.stringify(localState));
       setLedgerExists(false);
       window.dispatchEvent(new Event('storage'));
     } catch (e) {
@@ -276,18 +294,18 @@ const QueryCell = ({
 
   const addToConnCache = (ledgerName: string) => {
     // get local storage
-    let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
+    let localState = JSON.parse(localStorage.getItem('connCache') || '{}');
 
-    if (!localState.connCache) {
-      localState.connCache = {};
+    if (!localState) {
+      localState = {};
     }
-    if (!localState.connCache[connState.id]) {
-      localState.connCache[connState.id] = [];
+    if (!localState[connState.id]) {
+      localState[connState.id] = [];
     }
-    if (!localState.connCache[connState.id].includes(ledgerName)) {
-      localState.connCache[connState.id].push(ledgerName);
+    if (!localState[connState.id].includes(ledgerName)) {
+      localState[connState.id].push(ledgerName);
     }
-    localStorage.setItem('notebookState', JSON.stringify(localState));
+    localStorage.setItem('connCache', JSON.stringify(localState));
     setLedgerExists(true);
     window.dispatchEvent(new Event('storage'));
   };
@@ -355,7 +373,7 @@ const QueryCell = ({
       } else if (typeof item === 'object' && item !== null) {
         const nodeId = getIdFromItem(item)
           ? createNodeId(getIdFromItem(item) as string)
-          : createNodeId(Math.random().toString(36).substr(2, 9));
+          : createNodeId(`f${Math.random().toString(36).substring(2, 11)}`);
 
         if (!createdNodes.has(nodeId)) {
           createdNodes.add(nodeId);
@@ -379,7 +397,7 @@ const QueryCell = ({
         });
       } else {
         const valueNodeId = createNodeId(
-          Math.random().toString(36).substr(2, 9)
+          `f${Math.random().toString(36).substring(2, 11)}`
         );
         const attributeId = createAttributeId(
           parentId as string,
@@ -412,6 +430,12 @@ const QueryCell = ({
         .then((d) => {
           setResultStatusState('success');
           setResultState(JSON.stringify(d.data, null, 2));
+          try {
+            let mermaidResult = jsonToMermaid(d.data);
+            setResultMermaidState(mermaidResult);
+          } catch (e) {
+            console.warn('error converting JSON string to mermaid.');
+          }
         })
         .catch((e) => {
           setResultStatusState('error');
@@ -427,8 +451,9 @@ const QueryCell = ({
           if (typeof returnedValue === 'object') {
             returnedValue = JSON.stringify(returnedValue, null, 2);
           }
-
           setResultState(returnedValue);
+          setResultMermaidState('');
+          setShowResultMermaid(false);
         });
     } else {
       let headers: any = {
@@ -446,13 +471,21 @@ const QueryCell = ({
         })
         .then((d) => {
           setResultStatusState('success');
-          setResultState(JSON.stringify(d.data, null, 2));
+          let resultData = d.data;
+          if (connState.type === 'v2instance') {
+            delete resultData.flakes;
+          }
+          setResultState(JSON.stringify(resultData, null, 2));
           if (endpoint === 'query') {
             try {
-              console.log(jsonToMermaid(d.data));
+              let mermaidResult = jsonToMermaid(d.data);
+              setResultMermaidState(mermaidResult);
             } catch (e) {
               console.warn('error converting JSON string to mermaid.');
             }
+          } else {
+            setResultMermaidState('');
+            setShowResultMermaid(false);
           }
         })
         .catch((e) => {
@@ -485,6 +518,8 @@ const QueryCell = ({
           }
 
           setResultState(returnedValue);
+          setResultMermaidState('');
+          setShowResultMermaid(false);
         });
     }
   };
@@ -494,11 +529,15 @@ const QueryCell = ({
       setResultState(JSON.parse(result));
     } else {
       setResultState(null);
+      setResultMermaidState('');
+      setShowResultMermaid(false);
     }
     if (resultStatus) {
       setResultStatusState(resultStatus);
     } else {
       setResultStatusState(null);
+      setResultMermaidState('');
+      setShowResultMermaid(false);
     }
   }, [id, result, resultStatus]);
 
@@ -550,6 +589,7 @@ const QueryCell = ({
 
   const updateStoredResult = () => {
     let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
+    let connCache = JSON.parse(localStorage.getItem('connCache') || '{}');
     let activeNotebookId = localState.activeNotebookId;
     let activeNotebookIndex = localState.notebooks.findIndex(
       (obj: Notebook) => obj.id === activeNotebookId
@@ -564,39 +604,44 @@ const QueryCell = ({
       let ledger = '';
       // doesn't work for SPARQL...
       if (language === 'json') {
-        let val = JSON.parse(value);
-        if (defaultAction && ['transact', 'create'].includes(defaultAction)) {
-          if (val['f:ledger']) {
-            ledger = val['f:ledger'];
-          } else if (val.ledger) {
-            ledger = val.ledger;
+        try {
+          let val = JSON.parse(value);
+          if (defaultAction && ['transact', 'create'].includes(defaultAction)) {
+            if (val['f:ledger']) {
+              ledger = val['f:ledger'];
+            } else if (val.ledger) {
+              ledger = val.ledger;
+            }
+          } else if (defaultAction === 'query') {
+            if (val.from) {
+              ledger = val.from;
+            }
           }
-        } else if (defaultAction === 'query') {
-          if (val.from) {
-            ledger = val.from;
+
+          if (!activeNotebook.connCache) {
+            activeNotebook.connCache = {};
           }
-        }
 
-        if (!activeNotebook.connCache) {
-          activeNotebook.connCache = {};
-        }
+          if (!connCache) {
+            connCache = {};
+          }
 
-        if (!localState.connCache) {
-          localState.connCache = {};
-        }
-
-        activeNotebook.connCache[connState.id] = ledger;
-        if (!localState.connCache[connState.id]) {
-          localState.connCache[connState.id] = [];
-        }
-        if (!localState.connCache[connState.id].includes(ledger)) {
-          localState.connCache[connState.id].push(ledger);
+          activeNotebook.connCache[connState.id] = ledger;
+          if (!connCache[connState.id]) {
+            connCache[connState.id] = [];
+          }
+          if (!connCache[connState.id].includes(ledger)) {
+            connCache[connState.id].push(ledger);
+          }
+        } catch (e) {
+          console.warn(e);
         }
       }
     }
 
     localState.notebooks[activeNotebookIndex] = activeNotebook;
     localStorage.setItem('notebookState', JSON.stringify(localState));
+    localStorage.setItem('connCache', JSON.stringify(connCache));
     window.dispatchEvent(new Event('storage'));
   };
 
@@ -632,19 +677,6 @@ const QueryCell = ({
     }, 2000);
   };
 
-  const notify = () => {
-    toast('Copied!', {
-      position: 'bottom-left',
-      autoClose: 2000,
-      hideProgressBar: true,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      className: 'bg-ui-green-600 text-white',
-    });
-  };
-
   const defaultQuery = () => {
     return JSON.stringify(
       {
@@ -652,12 +684,13 @@ const QueryCell = ({
         select: {
           '?s': ['*'],
         },
-        where: [['?s', 'rdf:type', 'rdfs:Class']],
+        where: [['?s', '@type', 'ex:Yeti']],
       },
       null,
       2
     );
   };
+
   const defaultTransaction = () => {
     return JSON.stringify(
       {
@@ -665,8 +698,9 @@ const QueryCell = ({
         ledger: getDefaultLedger(),
         insert: [
           {
-            '@id': 'ex:freddy',
-            'foaf:name': 'Freddy',
+            '@id': 'ex:betty',
+            '@type': 'ex:Yeti',
+            'schema:name': 'Betty',
           },
         ],
       },
@@ -674,6 +708,7 @@ const QueryCell = ({
       2
     );
   };
+
   const defaultCreate = () => {
     return JSON.stringify(
       {
@@ -722,6 +757,9 @@ const QueryCell = ({
   };
 
   const getDefaultLedger = () => {
+    if (connState.type === 'dataset') {
+      return connState.name;
+    }
     // get local storage
     let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
 
@@ -800,6 +838,10 @@ const QueryCell = ({
     onChange(formattedQuery);
   }
 
+  const toggleMermaid = () => {
+    setShowResultMermaid(!showResultMermaid);
+  };
+
   return (
     <div className="mb-6" id={id}>
       <div className="flex -ml-[10px] w-[calc(100%)] justify-start pl-8 items-end">
@@ -855,7 +897,7 @@ const QueryCell = ({
                 : 'Query'
             }
             className={
-              defaultAction === 'query' || sampleData
+              defaultAction === 'query' || (sampleData && hover)
                 ? `transition ${
                     focused || hover
                       ? 'text-ui-main-600 dark:text-ui-main-300'
@@ -865,8 +907,8 @@ const QueryCell = ({
             }
           >
             <Search />
-            {sampleData && language === 'json' && (
-              <span className="absolute text-[snow] -right-[4px] -top-[1px] flex w-[13px] h-[13px]">
+            {sampleData && language === 'json' && hover && (
+              <span className="absolute text-ui-neutral-800 dark:text-[snow] -right-[4px] -top-[1px] flex w-[13px] h-[13px]">
                 <SampleText className="w-2 h-2" />
               </span>
             )}
@@ -891,7 +933,7 @@ const QueryCell = ({
                     : 'Transact'
                 }
                 className={
-                  defaultAction === 'transact' || sampleData
+                  defaultAction === 'transact' || (sampleData && hover)
                     ? `transition ${
                         focused || hover
                           ? 'text-ui-yellow-400 dark:text-ui-yellow-300'
@@ -901,15 +943,15 @@ const QueryCell = ({
                 }
               >
                 <Bolt />
-                {sampleData && (
-                  <span className="absolute text-[snow] -right-[4px] -top-[1px] flex w-[13px] h-[13px]">
+                {sampleData && hover && (
+                  <span className="absolute text-ui-neutral-800 dark:text-[snow] -right-[4px] -top-[1px] flex w-[13px] h-[13px]">
                     <SampleText className="w-2 h-2" />
                   </span>
                 )}
               </IconButton>
 
               {!['dataset', 'memory'].includes(connState.type) &&
-                !ledgerExists && (
+                (!ledgerExists || (hover && sampleData)) && (
                   <IconButton
                     actionRef={defaultAction === 'create' ? actionRef : null}
                     onClick={
@@ -919,13 +961,13 @@ const QueryCell = ({
                     }
                     tooltip={
                       sampleData
-                        ? 'Populate Sample Creation'
+                        ? 'Populate Sample Create'
                         : defaultAction === 'create' && focused
                         ? 'Create Ledger [F9]'
                         : 'Create Ledger'
                     }
                     className={
-                      defaultAction === 'create' || sampleData
+                      defaultAction === 'create' || (sampleData && hover)
                         ? `transition ${
                             focused || hover
                               ? 'text-ui-indigo-700 dark:text-ui-indigo-400'
@@ -935,8 +977,8 @@ const QueryCell = ({
                     }
                   >
                     <Plus />
-                    {sampleData && (
-                      <span className="absolute text-[snow] -right-[4px] -top-[1px] flex w-[13px] h-[13px]">
+                    {sampleData && hover && (
+                      <span className="absolute text-ui-neutral-800 dark:text-[snow] -right-[4px] -top-[1px] flex w-[13px] h-[13px]">
                         <SampleText className="w-2 h-2" />
                       </span>
                     )}
@@ -1051,6 +1093,17 @@ const QueryCell = ({
                 aria-hidden="true"
               />
             )}
+            {connState.type === 'v2instance' && (
+              <Flake
+                className={`mr-[5px] -ml-[2px] -mt-[1px] h-5 w-5 text-ui-main-300 dark:text-ui-main-300 delay-200 transition 
+                ${
+                  focused || hover
+                    ? 'dark:text-opacity-100 text-opacity-100'
+                    : 'dark:text-opacity-50 text-opacity-50'
+                }`}
+                aria-hidden="true"
+              />
+            )}
             {connState.type === 'dataset' && (
               <Cloud
                 className={`mr-[5px] -ml-[2px] -mt-[1px] h-5 w-5 text-ui-main-500 dark:text-ui-main-500 delay-200 transition 
@@ -1079,7 +1132,7 @@ const QueryCell = ({
       </div>
       <div
         // className={`bg-ui-surface-lite-050 rounded-md border-solid  border w-[99%] relative overflow-hidden`}
-        className="rounded-md border-solid border-2 border-ui-main-400 border relative overflow-hidden mr-[23px]"
+        className="rounded-md border-solid border-2 border-ui-main-400 relative overflow-hidden mr-[23px] max-w-[calc(100vw-345px)]"
       >
         <MonacoCell
           value={value}
@@ -1092,9 +1145,26 @@ const QueryCell = ({
           onKeyDown={doDefaultAction}
         />
       </div>
+      <div
+        style={{ zIndex: 100000, opacity: 0 }}
+        className={`absolute ml-[8px] -mt-[29px] rounded-full flex items-center justify-center bg-[red] transition hover:opacity-100
+        ${hover ? 'opacity-100' : 'opacity-0'}`}
+      >
+        <IconButton
+          size="sm"
+          tooltip="Toggle Max Height"
+          className="bg-[red] opacity-100 dark:opacity-100 dark:bg-opacity-100 bg-opacity-100"
+        >
+          <Resize1 />
+        </IconButton>
+      </div>
 
       {resultState && (
-        <div className={`pt-2 result-${resultStatusState}`}>
+        <div
+          className={`pt-2 result-${resultStatusState}`}
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
+        >
           <div
             className={`rounded-md border-solid border-2 ${
               resultStatusState === 'error'
@@ -1102,13 +1172,11 @@ const QueryCell = ({
                 : resultStatusState === 'warn'
                 ? 'border-ui-yellow-400 dark:border-ui-yellow-300'
                 : 'border-ui-green-400 dark:border-ui-green-300'
-            } border relative overflow-hidden mr-[23px]`}
+            } border relative overflow-hidden mr-[23px] max-w-[calc(100vw-345px)]`}
           >
             <div className="flex -ml-[10px] w-[calc(100%)] items-center justify-end pr-4">
               <div
                 id="result-toolbar"
-                onMouseEnter={() => setHover(true)}
-                onMouseLeave={() => setHover(false)}
                 className={`bg-ui-main-300 dark:bg-ui-neutral-700 bg-opacity-20 dark:bg-opacity-20 px-3 py-[3px] -mb-9 rounded-b-md
           backdrop-blur transition flex gap-1 z-10 
           ${
@@ -1121,6 +1189,21 @@ const QueryCell = ({
                   <>
                     <IconButton onClick={revertResult} tooltip="Revert Results">
                       <ArrowUturnLeft />
+                    </IconButton>
+
+                    <span className="border-ui-main-900 dark:border-white border-l-[1px] opacity-20 mx-2 -mt-[2px] -mb-[2px]"></span>
+                  </>
+                )}
+
+                {resultMermaidState && resultStatusState === 'success' && (
+                  <>
+                    <IconButton
+                      onClick={toggleMermaid}
+                      tooltip={
+                        showResultMermaid ? 'Hide Mermaid' : 'View as Mermaid'
+                      }
+                    >
+                      <Mermaid />
                     </IconButton>
 
                     <span className="border-ui-main-900 dark:border-white border-l-[1px] opacity-20 mx-2 -mt-[2px] -mb-[2px]"></span>
@@ -1156,18 +1239,51 @@ const QueryCell = ({
                 </IconButton>
               </div>
             </div>
-            <MonacoCell
-              value={resultState}
-              language="json"
-              setHover={setHover}
-              monacoRef={resultRef}
-              readOnly={true}
-              wrap={true}
-            />
+            <div className="flex">
+              <div className={showResultMermaid ? `w-[50%]` : `w-[100%]`}>
+                <MonacoCell
+                  value={resultState}
+                  language="json"
+                  setHover={setHover}
+                  monacoRef={resultRef}
+                  readOnly={true}
+                  //   wrap={true}
+                  heightOverride={showResultMermaid ? height : 0}
+                />
+                <div
+                  style={{ zIndex: 100000, opacity: 0 }}
+                  className={`absolute ml-[8px] -mt-[29px] rounded-full flex items-center justify-center bg-[red] transition hover:opacity-100
+        ${hover ? 'opacity-100' : 'opacity-0'}`}
+                >
+                  <IconButton
+                    size="sm"
+                    tooltip="Toggle Max Height"
+                    className="bg-[red] opacity-100 dark:opacity-100 dark:bg-opacity-100 bg-opacity-100"
+                  >
+                    <Resize1 />
+                  </IconButton>
+                </div>
+              </div>
+              {resultMermaidState && showResultMermaid && (
+                <div className="mt-3 w-[50%] flex justify-center">
+                  <MermaidCell
+                    id={`${id}-mermaid`}
+                    index={index}
+                    value={resultMermaidState}
+                    defaultConn={defaultConn}
+                    addCell={addCell}
+                    moveCell={moveCell}
+                    duplicateCell={duplicateCell}
+                    deleteCell={deleteCell}
+                    readOnly={true}
+                    onChange={setResultMermaidState}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
-      <ToastContainer />
     </div>
   );
 };

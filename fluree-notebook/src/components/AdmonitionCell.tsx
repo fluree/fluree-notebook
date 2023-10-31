@@ -22,6 +22,7 @@ import { DocumentDown } from './icons/DocumentDown';
 import { Duplicate } from './icons/Duplicate';
 import { ExclamationCircle } from './icons/ExclamationCircle';
 import { LightBulb } from './icons/LightBulb';
+import { PencilSquare } from './icons/PencilSquare';
 import { Info } from './icons/Info';
 
 const AdmonitionCell: React.FC<{
@@ -494,55 +495,131 @@ const AdmonitionCell: React.FC<{
   ) : (
     <div
       id={id}
-      className="flex flex-row rounded-md mr-6 mb-6"
+      className={`flex flex-col rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 mb-4
+      max-w-[calc(100vw-345px)]`}
       onDoubleClick={startEditing}
+      onMouseOver={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
     >
-      <div className="w-[calc(100%)]">
+      <div className="flex w-[calc(100%)] items-center justify-end h-[50] relative left-1">
         <div
-          data-name="admonition-wrapper"
-          className={`px-6 py-5 m-2 rounded-xl border-l-[7px] shadow-md 
-            ${admonitionWrapperStyles[admonitionType]}`}
+          id="result-toolbar"
+          style={{ zIndex: 10000 - index }}
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
+          className={`bg-ui-main-300 dark:bg-ui-neutral-700 bg-opacity-20 dark:bg-opacity-20 px-3 py-[3px] -mb-[55px] mt-3 mr-4 rounded-md
+  backdrop-blur transition flex gap-1
+  ${
+    focused || hover
+      ? 'opacity-1000'
+      : 'opacity-0 dark:text-ui-neutral-500 text-ui-neutral-600'
+  }`}
         >
+          <IconButton onClick={startEditing} tooltip={'Edit'}>
+            <PencilSquare />
+          </IconButton>
+
+          <span className="border-ui-main-900 dark:border-white border-l-[1px] opacity-20 mx-2 -my-[2px]"></span>
+
+          <IconButton
+            onClick={() => duplicateCell(index)}
+            tooltip="Duplicate Cell"
+          >
+            <Duplicate />
+          </IconButton>
+
+          <AddCellMenu
+            addCell={addCell}
+            index={index}
+            conn={defaultConn}
+            defaultLedger={getDefaultLedger()}
+          >
+            <IconButton tooltip="Create Cell Above">
+              <DocumentUp />
+            </IconButton>
+          </AddCellMenu>
+
+          <AddCellMenu
+            addCell={addCell}
+            index={index + 1}
+            conn={defaultConn}
+            defaultLedger={getDefaultLedger()}
+          >
+            <IconButton tooltip="Create Cell Below">
+              <DocumentDown />
+            </IconButton>
+          </AddCellMenu>
+
+          <span className="border-ui-main-900 dark:border-white border-l-[1px] opacity-20 mx-2 -my-[2px]"></span>
+          <IconButton
+            onClick={() => moveCell('up', index)}
+            tooltip="Move Cell Up"
+          >
+            <ArrowUp />
+          </IconButton>
+          <IconButton
+            onClick={() => moveCell('down', index)}
+            tooltip="Move Cell Down"
+          >
+            <ArrowDown />
+          </IconButton>
+          <IconButton onClick={() => deleteCell(index)} tooltip="Delete Cell">
+            <Delete />
+          </IconButton>
+        </div>
+      </div>
+      <div
+        id={id}
+        className="flex flex-row rounded-md"
+        onDoubleClick={startEditing}
+      >
+        <div className="w-[calc(100%)]">
           <div
-            data-name="admonition-header-container"
-            className={`inline-flex items-center font-sans tracking-tight font-bold
+            data-name="admonition-wrapper"
+            className={`px-6 py-5 m-8 rounded-xl border-l-[7px] shadow-md 
+            ${admonitionWrapperStyles[admonitionType]}`}
+          >
+            <div
+              data-name="admonition-header-container"
+              className={`inline-flex items-center font-sans tracking-tight font-bold
               ${admonitionHeaderStyles[admonitionType]}`}
-          >
-            {admonitionType === 'note' && (
-              <Info className="mr-2 -mb-[2px] h-5 w-5" />
-            )}
+            >
+              {admonitionType === 'note' && (
+                <Info className="mr-2 -mb-[2px] h-5 w-5" />
+              )}
 
-            {admonitionType === 'info' && (
-              <ExclamationCircle className="mr-2 -mb-[2px] h-5 w-5 " />
-            )}
+              {admonitionType === 'info' && (
+                <ExclamationCircle className="mr-2 -mb-[2px] h-5 w-5 " />
+              )}
 
-            {admonitionType === 'tip' && (
-              <LightBulb className="mr-2 -mb-[2px] h-5 w-5 " />
-            )}
+              {admonitionType === 'tip' && (
+                <LightBulb className="mr-2 -mb-[2px] h-5 w-5 " />
+              )}
 
-            {admonitionType === 'caution' && (
-              <Caution className="mr-2 -mb-[2px] h-5 w-5 " />
-            )}
-            <span className="uppercase">{admonitionType}</span>
+              {admonitionType === 'caution' && (
+                <Caution className="mr-2 -mb-[2px] h-5 w-5 " />
+              )}
+              <span className="uppercase">{admonitionType}</span>
+            </div>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              className="prose dark:invert dark:hue-rotate-180 max-w-full min-w-full w-full"
+              components={{
+                code({ inline, className, children, ...props }) {
+                  if (inline) return <code {...props}>{children}</code>;
+
+                  const value = String(children).replace(/\n$/, '');
+                  let language = '';
+                  if (className) {
+                    language = className.replace('language-', '');
+                  }
+                  return <CodeBlock language={language} value={value} />;
+                },
+              }}
+            >
+              {value}
+            </ReactMarkdown>
           </div>
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            className="prose dark:invert dark:hue-rotate-180 max-w-full min-w-full w-full"
-            components={{
-              code({ inline, className, children, ...props }) {
-                if (inline) return <code {...props}>{children}</code>;
-
-                const value = String(children).replace(/\n$/, '');
-                let language = '';
-                if (className) {
-                  language = className.replace('language-', '');
-                }
-                return <CodeBlock language={language} value={value} />;
-              },
-            }}
-          >
-            {value}
-          </ReactMarkdown>
         </div>
       </div>
     </div>

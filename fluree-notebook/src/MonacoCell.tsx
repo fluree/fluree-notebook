@@ -30,8 +30,10 @@ const MonacoCell: React.FC<{
   editorRef,
   readOnly = false,
   wrap = false,
+  heightOverride,
 }) => {
   const [height, setHeight] = useState(300);
+  const [enforceMaxHeight, setEnforceMaxHeight] = useState(false);
 
   const {
     state: { theme },
@@ -45,7 +47,7 @@ const MonacoCell: React.FC<{
 
   useEffect(() => {
     handleChange();
-  }, [value]);
+  }, [value, heightOverride]);
 
   const handleChange = () => {
     try {
@@ -60,7 +62,11 @@ const MonacoCell: React.FC<{
       // if (pixels > 488) {
       //   pixels = 488;
       // }
-      setHeight(pixels);
+      if (isNaN(heightOverride) || heightOverride === 0) {
+        setHeight(pixels);
+      } else {
+        setHeight(Math.max(pixels, heightOverride));
+      }
     } catch (e) {
       console.warn(e);
     }
@@ -128,8 +134,8 @@ const MonacoCell: React.FC<{
     <div>
       <div
         className="flex"
-        onMouseOver={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
+        onMouseOver={readOnly ? null : () => setHover(true)}
+        onMouseLeave={readOnly ? null : () => setHover(false)}
       >
         <Editor
           language={language}

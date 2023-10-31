@@ -139,7 +139,7 @@ const SidebarMenu = ({
           delete newNotebook.cells[i].resultStatus;
         }
 
-        newNotebook.id = Math.random().toString(36).substring(7);
+        newNotebook.id = `f${Math.random().toString(36).substring(2, 11)}`;
 
         let newName = newNotebook.name + ' Copy';
         let cachedName = newNotebook.name + ' Copy';

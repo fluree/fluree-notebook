@@ -55,7 +55,7 @@ const duplicateCell = (index: number) => {
   let activeNotebookCells = activeNotebook.cells;
 
   const newCell = JSON.parse(JSON.stringify(activeNotebookCells[index]));
-  newCell.id = Math.random().toString(36).substring(7);
+  newCell.id = `f${Math.random().toString(36).substring(2, 11)}`;
 
   if (newCell.result) {
     delete newCell.result;
@@ -191,7 +191,7 @@ const defaultFlureeQL = (defaultLedger: string) =>
     {
       from: defaultLedger ?? 'ledgerName',
       select: { '?s': ['*'] },
-      where: [['?s', 'rdf:type', 'rdfs:Class']],
+      where: [['?s', '@type', 'ex:Yeti']],
     },
     null,
     2
@@ -235,7 +235,7 @@ const addCell = (
       newVal = 'test';
   }
 
-  const id = Math.random().toString(36).substring(7); // generate a unique id
+  const id = `f${Math.random().toString(36).substring(2, 11)}`;
   let newCell: Cell = {
     id,
     type,

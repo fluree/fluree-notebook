@@ -11,12 +11,15 @@ import CodeBlock from '../Codeblock';
 
 import { ArrowDown } from './icons/ArrowDown';
 import { ArrowUp } from './icons/ArrowUp';
+import { ArrowUturnLeft } from './icons/ArrowUturnLeft';
 import { Cancel } from './icons/Cancel';
 import { Check } from './icons/Check';
 import { Delete } from './icons/Delete';
 import { Duplicate } from './icons/Duplicate';
 import { DocumentDown } from './icons/DocumentDown';
 import { DocumentUp } from './icons/DocumentUp';
+import { PencilIcon } from '@heroicons/react/20/solid';
+import { PencilSquare } from './icons/PencilSquare';
 
 const MarkdownCell: React.FC<{
   id: string;
@@ -348,9 +351,84 @@ const MarkdownCell: React.FC<{
   ) : (
     <div
       id={id}
-      className="flex flex-row rounded-md mr-6 mb-6"
+      className={`flex flex-col py-3 mr-6 rounded-lg ${
+        !titleCell
+          ? 'hover:bg-gray-100 dark:hover:bg-gray-900 mb-6 px-4'
+          : 'mb-3 px-2'
+      }`}
       onDoubleClick={startEditing}
+      onMouseOver={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
     >
+      <div className="flex w-[calc(100%)] items-center justify-end h-[50] relative left-1">
+        {!titleCell && (
+          <div
+            id="result-toolbar"
+            style={{ zIndex: 10000 - index }}
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
+            className={`bg-ui-main-300 dark:bg-ui-neutral-700 bg-opacity-20 dark:bg-opacity-20 px-3 py-[3px] -mb-[45px] -mt-3 rounded-md
+        backdrop-blur transition flex gap-1
+        ${
+          focused || hover
+            ? 'opacity-100'
+            : 'opacity-0 dark:text-ui-neutral-500 text-ui-neutral-600'
+        }`}
+          >
+            <IconButton onClick={startEditing} tooltip={'Edit'}>
+              <PencilSquare />
+            </IconButton>
+
+            <span className="border-ui-main-900 dark:border-white border-l-[1px] opacity-20 mx-2 -my-[2px]"></span>
+
+            <IconButton
+              onClick={() => duplicateCell(index)}
+              tooltip="Duplicate Cell"
+            >
+              <Duplicate />
+            </IconButton>
+
+            <AddCellMenu
+              addCell={addCell}
+              index={index}
+              conn={defaultConn}
+              defaultLedger={getDefaultLedger()}
+            >
+              <IconButton tooltip="Create Cell Above">
+                <DocumentUp />
+              </IconButton>
+            </AddCellMenu>
+
+            <AddCellMenu
+              addCell={addCell}
+              index={index + 1}
+              conn={defaultConn}
+              defaultLedger={getDefaultLedger()}
+            >
+              <IconButton tooltip="Create Cell Below">
+                <DocumentDown />
+              </IconButton>
+            </AddCellMenu>
+
+            <span className="border-ui-main-900 dark:border-white border-l-[1px] opacity-20 mx-2 -my-[2px]"></span>
+            <IconButton
+              onClick={() => moveCell('up', index)}
+              tooltip="Move Cell Up"
+            >
+              <ArrowUp />
+            </IconButton>
+            <IconButton
+              onClick={() => moveCell('down', index)}
+              tooltip="Move Cell Down"
+            >
+              <ArrowDown />
+            </IconButton>
+            <IconButton onClick={() => deleteCell(index)} tooltip="Delete Cell">
+              <Delete />
+            </IconButton>
+          </div>
+        )}
+      </div>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         className="prose dark:invert dark:hue-rotate-180 max-w-full min-w-full w-full"

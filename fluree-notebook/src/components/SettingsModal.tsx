@@ -11,6 +11,7 @@ import { Cloud } from './icons/Cloud';
 import { Cube } from './icons/Cube';
 import { Globe } from './icons/Globe';
 import { XMark } from './icons/Xmark';
+import { Flake } from './icons/Flake';
 
 const SettingsModal = () => {
   const {
@@ -135,6 +136,13 @@ const SettingsModal = () => {
                       {conn.type === 'instance' && (
                         <Cube
                           className={`mr-[6px] -ml-[2px] -mb-[1px] h-5 w-5 dark:text-ui-yellow-400 text-ui-yellow-400 delay-200 transition 
+                        `}
+                          aria-hidden="true"
+                        />
+                      )}
+                      {conn.type === 'v2instance' && (
+                        <Flake
+                          className={`mr-[6px] -ml-[2px] -mb-[1px] h-5 w-5 dark:text-ui-main-300 text-ui-main-300 delay-200 transition 
                         `}
                           aria-hidden="true"
                         />

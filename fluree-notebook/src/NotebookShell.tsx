@@ -117,15 +117,16 @@ export const NotebookShell = (): JSX.Element => {
 
   const globalListener = (e: KeyboardEvent) => {
     const listenKeys = ['AltLeft', 'AltRight', 'ShiftLeft', 'ShiftRight'];
+    let newObj = { ...keyListener };
     if (e.type == 'keydown') {
       if (listenKeys.includes(e.code)) {
-        keyListener[e.code] = true;
-        updateGlobalKey(keyListener);
+        newObj[e.code] = true;
+        updateGlobalKey(newObj);
       }
     } else {
       if (listenKeys.includes(e.code)) {
-        delete keyListener[e.code];
-        updateGlobalKey(keyListener);
+        delete newObj[e.code];
+        updateGlobalKey(newObj);
       }
     }
   };
@@ -221,7 +222,7 @@ export const NotebookShell = (): JSX.Element => {
   }, [state]);
 
   const addNewNotebook = () => {
-    const id = Math.random().toString(36).substring(7); // generate a unique id
+    const id = `f${Math.random().toString(36).substring(2, 11)}`;
     let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
     let notebooks = localState.notebooks;
 
@@ -251,14 +252,14 @@ export const NotebookShell = (): JSX.Element => {
           defaultConn,
           cells: [
             {
-              id: Math.random().toString(36).substring(7),
+              id: `f${Math.random().toString(36).substring(2, 11)}`,
               value: `# ${name}`,
               language: 'json',
               type: 'markdown',
               titleCell: true,
             },
             {
-              id: Math.random().toString(36).substring(7),
+              id: `f${Math.random().toString(36).substring(2, 11)}`,
               value: defaultFlureeQL(ledger),
               language: 'json',
               type: 'monaco',
@@ -305,7 +306,7 @@ export const NotebookShell = (): JSX.Element => {
 
     if (!newData.cells[0].titleCell) {
       let titleCell = {
-        id: Math.random().toString(36).substring(7),
+        id: `f${Math.random().toString(36).substring(2, 11)}`,
         value: `# ${newData.name}`,
         language: 'json',
         type: 'markdown',
@@ -329,8 +330,8 @@ export const NotebookShell = (): JSX.Element => {
         localState.notebooks.splice(existingNotebook, 1, newData);
         localState.activeNotebookId = newData.id;
       } else {
-        newData.id = Math.random().toString(36).substring(7);
-        localState.notebooks.push(newData);
+        (newData.id = `f${Math.random().toString(36).substring(2, 11)}`),
+          localState.notebooks.push(newData);
         localState.activeNotebookId = newData.id;
       }
     } else {
@@ -366,7 +367,11 @@ export const NotebookShell = (): JSX.Element => {
 
       const markdownValue = `### ${name}\n\n- **Method:** ${method}\n- **URL:** ${url.raw}\n`;
       // @ts-ignore
-      cells.push({ type: 'markdown', value: markdownValue });
+      cells.push({
+        id: `f${Math.random().toString(36).substring(2, 11)}`,
+        type: 'markdown',
+        value: markdownValue,
+      });
 
       let requestBody;
       if (language === 'json') {
@@ -383,7 +388,12 @@ export const NotebookShell = (): JSX.Element => {
       }
 
       // @ts-ignore
-      cells.push({ type: 'monaco', value: requestBody, language });
+      cells.push({
+        id: `f${Math.random().toString(36).substring(2, 11)}`,
+        type: 'monaco',
+        value: requestBody,
+        language,
+      });
     };
 
     const parseItems = (items: any[]) => {
@@ -412,7 +422,7 @@ export const NotebookShell = (): JSX.Element => {
     const lines = markdown.split('\n');
 
     const result: NotebookType = {
-      id: Math.random().toString(36).substring(7),
+      id: `f${Math.random().toString(36).substring(2, 11)}`,
       name: '',
       cells: [],
     };
@@ -427,7 +437,7 @@ export const NotebookShell = (): JSX.Element => {
         if (currentText.trim()) {
           // @ts-ignore
           result.cells.push({
-            id: Math.random().toString(36).substr(2, 6),
+            id: `f${Math.random().toString(36).substring(2, 11)}`,
             type: 'markdown',
             value: removeTrailingNewline(currentText),
             language: 'json',
@@ -439,7 +449,7 @@ export const NotebookShell = (): JSX.Element => {
         if (isInsideCodeBlock) {
           // @ts-ignore
           result.cells.push({
-            id: Math.random().toString(36).substr(2, 6),
+            id: `f${Math.random().toString(36).substring(2, 11)}`,
             type: 'monaco',
             value: removeTrailingNewline(codeContent),
             language: language,
@@ -461,7 +471,7 @@ export const NotebookShell = (): JSX.Element => {
         if (currentText.trim()) {
           // @ts-ignore
           result.cells.push({
-            id: Math.random().toString(36).substr(2, 6),
+            id: `f${Math.random().toString(36).substring(2, 11)}`,
             type: 'markdown',
             value: removeTrailingNewline(currentText),
             language: 'json',
@@ -491,7 +501,7 @@ export const NotebookShell = (): JSX.Element => {
     // After looping, if there's still plain text accumulated, add it as a markdown cell
     if (currentText.trim()) {
       result?.cells?.push({
-        id: Math.random().toString(36).substr(2, 6),
+        id: `f${Math.random().toString(36).substring(2, 11)}`,
         type: 'markdown',
         value: removeTrailingNewline(currentText),
         language: 'json',
@@ -517,7 +527,7 @@ export const NotebookShell = (): JSX.Element => {
               const [, admonitionType, content] = match;
               // @ts-ignore
               newCells.push({
-                id: Math.random().toString(36).substring(7),
+                id: `f${Math.random().toString(36).substring(2, 11)}`,
                 type: 'admonition',
                 value: content.trim(),
                 language: 'json',
@@ -556,7 +566,7 @@ export const NotebookShell = (): JSX.Element => {
               const [, chartContent] = match;
               // @ts-ignore
               newCells.push({
-                id: Math.random().toString(36).substring(7),
+                id: `f${Math.random().toString(36).substring(2, 11)}`,
                 type: 'mermaid',
                 value: chartContent.trim(),
                 language: 'json',
@@ -593,7 +603,7 @@ export const NotebookShell = (): JSX.Element => {
 
       if (!newData.cells[0].titleCell) {
         let titleCell = {
-          id: Math.random().toString(36).substring(7),
+          id: `f${Math.random().toString(36).substring(2, 11)}`,
           value: `# ${newData.name}`,
           language: 'json',
           type: 'markdown',
@@ -621,7 +631,7 @@ export const NotebookShell = (): JSX.Element => {
           localState.activeNotebookId = newData.id;
         } else {
           // assign new id
-          newData.id = Math.random().toString(36).substring(7);
+          newData.id = `f${Math.random().toString(36).substring(2, 11)}`;
           localState.notebooks.push(newData);
           localState.activeNotebookId = newData.id;
         }

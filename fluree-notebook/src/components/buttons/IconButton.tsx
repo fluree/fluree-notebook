@@ -38,10 +38,10 @@ const IconButton = ({
         ref={actionRef}
         data-tooltip={tooltip}
         onClick={onClick}
-        className={`${className} relative rounded-full hover:bg-ui-main-400 dark:hover:bg-ui-neutral-800 
+        className={`relative rounded-full hover:bg-ui-main-400 dark:hover:bg-ui-neutral-800 
             cursor-pointer ${getPadding()} bg-opacity-50 dark:bg-opacity-50 hover:bg-opacity-50 dark:hover:bg-opacity-50 flex items-center justify-center ${
           size ? `icon-button-${size}` : 'icon-button-md'
-        } transition`}
+        } transition ${className}`}
       >
         {children}
       </span>

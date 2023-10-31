@@ -9,7 +9,7 @@ const InstancesGrid = () => {
 
   const addInstance = () => {
     const newInstance = {
-      id: Math.random().toString(36).substring(7), // generate a unique id
+      id: `f${Math.random().toString(36).substring(2, 11)}`,
       new: true,
       name: '',
       url: '',

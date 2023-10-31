@@ -16,10 +16,9 @@ import { Duplicate } from './icons/Duplicate';
 import { DocumentUp } from './icons/DocumentUp';
 import { DocumentDown } from './icons/DocumentDown';
 import { Cancel } from './icons/Cancel';
+import { PencilSquare } from './icons/PencilSquare';
 
-// @ts-ignore
 import { Mermaid } from 'mdx-mermaid/Mermaid';
-// @ts-ignore
 import { mermaidTheme } from '../mermaidTheme';
 
 const MermaidCell: React.FC<{
@@ -28,6 +27,7 @@ const MermaidCell: React.FC<{
   index: number;
   defaultConn: string;
   titleCell?: boolean;
+  readOnly?: boolean;
   addCell: (
     cellType: 'Markdown' | 'Mermaid' | 'SPARQL' | 'FLUREEQL' | 'Admonition',
     defaultLedger: string,
@@ -44,6 +44,7 @@ const MermaidCell: React.FC<{
   index,
   defaultConn,
   titleCell,
+  readOnly,
   addCell,
   moveCell,
   duplicateCell,
@@ -53,6 +54,7 @@ const MermaidCell: React.FC<{
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [storedValue, setStoredValue] = useState<string>(value);
   const [focused, setFocused] = useState<boolean>(false);
+  const [height, setHeight] = useState(300);
   const [hover, setHover] = useState<boolean>(false);
   const [theme, setTheme] = useState<string | null>(
     localStorage.getItem('theme') || 'light'
@@ -60,6 +62,7 @@ const MermaidCell: React.FC<{
   const monacoRef = useRef<any>();
   const editorRef = useRef<any>();
   const actionRef = useRef<HTMLSpanElement>();
+  const containerRef = useRef();
 
   const {
     state: { defaultConn: globalConn, theme: globalTheme },
@@ -178,6 +181,38 @@ const MermaidCell: React.FC<{
     onChange(value);
   };
 
+  useEffect(() => {
+    if (!readOnly) {
+      handleChange();
+    }
+  }, [value]);
+
+  const handleChange = () => {
+    try {
+      let lines = (value.match(/\n/g) || []).length;
+      lines++;
+      let pixels = 18 * lines + 20;
+      /* Lines below set min & max height for editor */
+      //
+      // if (pixels < 110) {
+      //   pixels = 110;
+      // }
+      // if (pixels > 488) {
+      //   pixels = 488;
+      // }
+
+      setTimeout(() => {
+        let containerHeight =
+          containerRef.current.querySelector('.mermaid').clientHeight + 24;
+        console.log(containerRef.current);
+        console.log('containerHeight: ' + containerHeight);
+        setHeight(Math.max(pixels, containerHeight));
+      }, 100);
+    } catch (e) {
+      console.warn(e);
+    }
+  };
+
   const getDefaultLedger = () => {
     // get local storage
     let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
@@ -205,7 +240,7 @@ const MermaidCell: React.FC<{
 
   const startEditing = () => {
     // start editing
-    if (!titleCell) {
+    if (!titleCell && !readOnly) {
       setIsEditing(true);
       let localState = JSON.parse(
         localStorage.getItem('notebookState') || '[]'
@@ -365,13 +400,15 @@ const MermaidCell: React.FC<{
               wordWrap: 'on',
             }}
             value={value}
-            height={'100%'}
+            // height={'100%'}
+            height={`${height}px`}
             width={'100%'}
             onChange={handleEditorChange}
             onMount={setEditorTheme}
           />
         </div>
         <div
+          ref={containerRef}
           onDoubleClick={stopEditing}
           className={`px-4 py-3 w-[calc(50%)] ${
             theme === 'dark' ? 'mermaid-dark' : ''
@@ -384,13 +421,90 @@ const MermaidCell: React.FC<{
   ) : (
     <div
       id={id}
-      className="flex flex-row rounded-md mr-6 mb-6"
+      className={`flex flex-col px-4 -mx-3 py-3 mr-6 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 mb-6 w-full
+      max-w-[calc(100vw-345px)]
+      ${theme === 'dark' ? 'mermaid-dark' : ''}
+      ${readOnly ? '-ml-[1px]' : ''}
+      relative left-3 top-1
+      `}
       onDoubleClick={startEditing}
+      onMouseOver={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
     >
-      <div
-        className={`px-4 py-3 w-[calc(100%)] ${
-          theme === 'dark' ? 'mermaid-dark' : ''
+      <div className="flex w-[calc(100%)] items-center justify-end h-[50] relative left-1">
+        {!readOnly && (
+          <div
+            id="result-toolbar"
+            style={{ zIndex: 100000 }}
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
+            className={`bg-ui-main-300 dark:bg-ui-neutral-700 bg-opacity-20 dark:bg-opacity-20 px-3 py-[3px] -mb-[45px] -mt-3 rounded-md
+        backdrop-blur transition flex gap-1
+        ${
+          focused || hover
+            ? 'opacity-1000'
+            : 'opacity-0 dark:text-ui-neutral-500 text-ui-neutral-600'
         }`}
+          >
+            <IconButton onClick={startEditing} tooltip={'Edit'}>
+              <PencilSquare className={`dark:invert-0 dark:hue-rotate-0`} />
+            </IconButton>
+
+            <span className="border-ui-main-900 dark:border-white border-l-[1px] opacity-20 mx-2 -my-[2px]"></span>
+
+            <IconButton
+              onClick={() => duplicateCell(index)}
+              tooltip="Duplicate Cell"
+            >
+              <Duplicate className={`dark:invert-0 dark:hue-rotate-0`} />
+            </IconButton>
+
+            <AddCellMenu
+              addCell={addCell}
+              index={index}
+              conn={defaultConn}
+              defaultLedger={getDefaultLedger()}
+              setHover={setHover}
+            >
+              <IconButton tooltip="Create Cell Above">
+                <DocumentUp className={`dark:invert-0 dark:hue-rotate-0`} />
+              </IconButton>
+            </AddCellMenu>
+
+            <AddCellMenu
+              addCell={addCell}
+              index={index + 1}
+              conn={defaultConn}
+              defaultLedger={getDefaultLedger()}
+            >
+              <IconButton tooltip="Create Cell Below">
+                <DocumentDown className={`dark:invert-0 dark:hue-rotate-0`} />
+              </IconButton>
+            </AddCellMenu>
+
+            <span className="border-ui-main-900 dark:border-white border-l-[1px] opacity-20 mx-2 -my-[2px]"></span>
+            <IconButton
+              onClick={() => moveCell('up', index)}
+              tooltip="Move Cell Up"
+            >
+              <ArrowUp className={`dark:invert-0 dark:hue-rotate-0`} />
+            </IconButton>
+            <IconButton
+              onClick={() => moveCell('down', index)}
+              tooltip="Move Cell Down"
+            >
+              <ArrowDown className={`dark:invert-0 dark:hue-rotate-0`} />
+            </IconButton>
+            <IconButton onClick={() => deleteCell(index)} tooltip="Delete Cell">
+              <Delete className={`dark:invert-0 dark:hue-rotate-0`} />
+            </IconButton>
+          </div>
+        )}
+      </div>
+      <div
+        className={`flex
+    ${readOnly ? 'justify-center h-full' : 'justify-start'}
+      `}
       >
         <Mermaid config={mermaidTheme} chart={value} />
       </div>
