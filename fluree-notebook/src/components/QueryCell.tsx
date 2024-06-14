@@ -123,8 +123,8 @@ const QueryCell = ({
     conn
       ? JSON.parse(conn)
       : defaultConn
-      ? JSON.parse(defaultConn)
-      : JSON.parse(globalConn)
+        ? JSON.parse(defaultConn)
+        : JSON.parse(globalConn)
   );
 
   useEffect(() => {
@@ -416,22 +416,39 @@ const QueryCell = ({
     return mermaidString;
   }
 
-  const flureePost = (endpoint: string, key?: string) => {
+  const flureePost = async (endpoint: string, key?: string) => {
     let url = `${connState.url}/${endpoint}`;
 
     if (language === 'sparql') {
-      axios
-        .post(url, value, {
-          headers: {
-            'Content-Type': 'application/sparql-query',
-          },
-          withCredentials: false,
-        })
-        .then((d) => {
+      await fetch(url, {
+        method: 'POST', // *GET, POST, PUT, DELETE, etc.
+        // mode: 'cors', // no-cors, *cors, same-origin
+        // cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+        // credentials: 'same-origin', // include, *same-origin, omit
+        headers: {
+          'Content-Type': 'application/sparql-query',
+          Authorization: `Bearer ${connState.key}`,
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        // redirect: 'follow', // manual, *follow, error
+        // referrerPolicy: 'no-referrer',
+        body: value, // body data type must match "Content-Type" header
+      })
+        //   axios
+        //     .post(url, value, {
+        //       headers: {
+        //         'Content-Type': 'application/sparql-query',
+        //       },
+        //       withCredentials: false,
+        //     })
+        .then(async (d) => {
+          console.log({ d });
+          const data = await d.json();
+          console.log({ data });
           setResultStatusState('success');
-          setResultState(JSON.stringify(d.data, null, 2));
+          setResultState(JSON.stringify(data, null, 2));
           try {
-            let mermaidResult = jsonToMermaid(d.data);
+            let mermaidResult = jsonToMermaid(data);
             setResultMermaidState(mermaidResult);
           } catch (e) {
             console.warn('error converting JSON string to mermaid.');
@@ -886,15 +903,15 @@ const QueryCell = ({
               sampleData && language === 'json'
                 ? () => populateSample('query')
                 : connState.type === 'memory'
-                ? () => memQuery(value, setResultState)
-                : () => flureePost('query')
+                  ? () => memQuery(value, setResultState)
+                  : () => flureePost('query')
             }
             tooltip={
               sampleData && language === 'json'
                 ? 'Populate Sample Query'
                 : defaultAction === 'query' && focused
-                ? 'Query [F9]'
-                : 'Query'
+                  ? 'Query [F9]'
+                  : 'Query'
             }
             className={
               defaultAction === 'query' || (sampleData && hover)
@@ -922,15 +939,15 @@ const QueryCell = ({
                   sampleData
                     ? () => populateSample('transaction')
                     : connState.type === 'memory'
-                    ? () => memTransact(value, setResultState)
-                    : () => flureePost('transact')
+                      ? () => memTransact(value, setResultState)
+                      : () => flureePost('transact')
                 }
                 tooltip={
                   sampleData
                     ? 'Populate Sample Transaction'
                     : defaultAction === 'transact' && focused
-                    ? 'Transact [F9]'
-                    : 'Transact'
+                      ? 'Transact [F9]'
+                      : 'Transact'
                 }
                 className={
                   defaultAction === 'transact' || (sampleData && hover)
@@ -963,8 +980,8 @@ const QueryCell = ({
                       sampleData
                         ? 'Populate Sample Create'
                         : defaultAction === 'create' && focused
-                        ? 'Create Ledger [F9]'
-                        : 'Create Ledger'
+                          ? 'Create Ledger [F9]'
+                          : 'Create Ledger'
                     }
                     className={
                       defaultAction === 'create' || (sampleData && hover)
@@ -1170,8 +1187,8 @@ const QueryCell = ({
               resultStatusState === 'error'
                 ? 'border-ui-red-400 dark:border-ui-red-300'
                 : resultStatusState === 'warn'
-                ? 'border-ui-yellow-400 dark:border-ui-yellow-300'
-                : 'border-ui-green-400 dark:border-ui-green-300'
+                  ? 'border-ui-yellow-400 dark:border-ui-yellow-300'
+                  : 'border-ui-green-400 dark:border-ui-green-300'
             } border relative overflow-hidden mr-[23px] max-w-[calc(100vw-345px)]`}
           >
             <div className="flex -ml-[10px] w-[calc(100%)] items-center justify-end pr-4">

@@ -5,29 +5,22 @@ services:
       context: ./fluree-notebook
       dockerfile: Dockerfile
     ports:
-      - "5173:5173"
+      - "5180:5180"
     volumes:
       - ./fluree-notebook:/app
-    depends_on:
-      - node_server
     command: sh -c "npm rebuild esbuild && npm run dev"
 
-  node_server:
-    build:
-      context: ./node-server
-      dockerfile: Dockerfile
-    ports:
-      - "5001:5001"
-    volumes:
-      - ./data:/app/data
-      - ./node-server:/app
-    depends_on:
-      - fluree
-
   fluree:
-    image: fluree/server:latest
+    image: fluree/server:llm-internal-beta
     ports:
       - "58090:8090"
     volumes:
       - "./data:/opt/fluree-server/data"
+
+  flureeV2:
+    image: fluree/ledger:latest
+    ports:
+      - "8090:8090"
+    volumes:
+      - "./V2data:/var/lib/fluree"
 

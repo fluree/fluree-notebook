@@ -20,4 +20,4 @@ RUN npm i
 CMD ["npm", "run", "dev"]
 
 # Expose the port for the frontend application
-EXPOSE 5173
+EXPOSE 5180

@@ -89,6 +89,7 @@ const Sidebar = ({
   };
 
   const exportMarkdown = (idArray: Array<string>) => {
+    console.log('TEST');
     let localState = JSON.parse(localStorage.getItem('notebookState') || '[]');
     for (var m = 0; m < idArray.length; m++) {
       let activeNotebook = localState.notebooks.find(
@@ -102,6 +103,7 @@ const Sidebar = ({
         if (activeCell.type === 'markdown') {
           data += activeCell.value;
         } else {
+          data += '## Transaction/Query: \n';
           data += '```';
           data += `${activeCell.language} \n`;
           if (activeCell.language === 'json') {
@@ -118,6 +120,19 @@ const Sidebar = ({
           }
           data += `\n`;
           data += '```';
+
+          // RESULT VALUE
+          if (activeCell.result) {
+            data += '\n ## Response: \n';
+            data += '```json \n';
+            data += JSON.stringify(
+              JSON.parse(JSON.parse(activeCell.result)),
+              null,
+              2
+            );
+            data += `\n`;
+            data += '```';
+          }
         }
         data += `\n`;
       }
