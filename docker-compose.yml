@@ -11,14 +11,17 @@ services:
     command: sh -c "npm rebuild esbuild && npm run dev"
 
   fluree:
-    image: fluree/server:llm-internal-beta
+    # image: fluree/server:llm-internal-beta
+    # image: fluree/server:3.0.0-alpha-1
+    image: fluree/server:latest
     ports:
       - "58090:8090"
     volumes:
       - "./data:/opt/fluree-server/data"
 
   flureeV2:
-    image: fluree/ledger:latest
+    # image: fluree/ledger:latest
+    image: fluree/ledger:2.0.4
     ports:
       - "8090:8090"
     volumes:
